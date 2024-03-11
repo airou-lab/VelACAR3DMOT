@@ -1,4 +1,4 @@
-name: CRN
+name: ExtCRN
 channels:
   - defaults
 dependencies:
