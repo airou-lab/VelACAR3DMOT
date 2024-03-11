@@ -27,8 +27,8 @@ WORKDIR /home/Workspace
 
 
 # Installing all packages
-RUN conda env create --file CRN.yaml
-RUN conda activate CRN
+RUN conda env create --file ExtCRN.yaml
+RUN conda activate ExtCRN
 
 RUN pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
 RUN pip install pytorch-lightning==1.6.0
