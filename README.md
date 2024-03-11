@@ -1,21 +1,8 @@
 # Extended_CRN: Camera Radar Net for Accurate, Robust, Efficient 3D Perception and tracking
 
-https://github.com/youngskkim/CRN/assets/24770858/1bf85a3a-ad22-4875-ab0c-deeee347b03f
-
-> [**CRN: Camera Radar Net for Accurate, Robust, Efficient 3D Perception**](https://arxiv.org/abs/2304.00670)  
-> [Youngseok Kim](https://youngskkim.github.io/),
-> Juyeb Shin, Sanmin Kim, In-Jae Lee, 
-> [Jun Won Choi](https://www.spa.hanyang.ac.kr/),
-> [Dongsuk Kum](http://vdclab.kaist.ac.kr/)  
-> [*ICCV 2023*](https://iccv2023.thecvf.com/)
-
-
 ## Abstract
-In this paper, we propose Camera Radar Net (CRN), a novel camera-radar fusion framework that generates a semantically rich and spatially accurate bird's-eye-view (BEV) feature map for various tasks.
-To overcome the lack of spatial information in an image, we transform perspective view image features to BEV with the help of sparse but accurate radar points.
-We further aggregate image and radar feature maps in BEV using multi-modal deformable attention designed to tackle the spatial misalignment between inputs.
-CRN with real-time setting operates at 20 FPS while achieving comparable performance to LiDAR detectors on nuScenes, and even outperforms at a far distance on 100m setting.
-Moreover, CRN with offline setting yields 62.4% NDS, 57.5% mAP on nuScenes test set and ranks first among all camera and camera-radar 3D object detectors.
+
+(#TODO)
 
 
 ## Getting Started
@@ -23,7 +10,8 @@ Moreover, CRN with offline setting yields 62.4% NDS, 57.5% mAP on nuScenes test 
 ### Git
 ```shell
 # clone repo
-git clone https://github.com/youngskkim/CRN.git
+git clone git@github.com:airou-lab/ExtendedCRN.git
+
 ```
 
 ### Docker
@@ -36,13 +24,13 @@ sudo docker pull nvidia/cuda:11.1.1-devel-ubuntu20.04
 cd ~/Documents
 mkdir Docker
 cd Docker
-cp ~/CRN/Dockerfile .
+cp ~/ExtendedCRN/Dockerfile .
 
 # Building CRN image
 sudo docker build -t crn_image:v1 .
 
 # Creating mounted gpu-enabled container
-sudo docker run --name CRN_V1 -v ~/Documents/CRN:/home/CRN --gpus all -shm-size 5G -it crn_image:v1
+sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all -shm-size 5G -it crn_image:v1
 ```
 You should now be in the container shell
 Upon encountering any memory-related issue, be sure to check the shared memory of the container using ```df -h```. A simple fix can be to increase the -shm-size.
@@ -50,11 +38,9 @@ Upon encountering any memory-related issue, be sure to check the shared memory o
 ### Installation
 ```shell
 
-cd CRN
-
 # setup conda environment
-conda env create --file CRN.yaml
-conda activate CRN
+conda env create --file ExtCRN.yaml
+conda activate ExtCRN
 
 # install dependencies
 pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
