@@ -27,7 +27,7 @@ cd ~/Documents/ExtendedCRN/Docker
 sudo docker build -t extcrn_image:v1 .
 
 # Creating mounted gpu-enabled container
-sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all -shm-size 10G -it extcrn_image:v1
+sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
 ```
 You should now be in the container shell
 Upon encountering any memory-related issue, be sure to check the shared memory of the container using ```df -h```. A simple fix can be to increase the -shm-size.
