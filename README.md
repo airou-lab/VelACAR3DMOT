@@ -35,38 +35,13 @@ Upon encountering any memory-related issue, be sure to check the shared memory o
 ### Installation
 ```shell
 
-# setup conda environment
-conda env create --file ExtCRN.yaml
-conda activate ExtCRN
-
-# install dependencies
-pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-pip install pytorch-lightning==1.6.0
-pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
-pip install torchmetrics==0.4.1
-mim install mmcv==1.6.0
-mim install mmsegmentation==0.28.0
-mim install mmdet==2.25.2
-
-cd mmdetection3d
+cd Detection/mmdetection3d
 pip install -v -e .
 cd ..
 
 python setup.py develop  # GPU required
-```
-To fix mmcv import issue[^1][^2][^3]: 
-```
-apt-get update && apt-get install -y git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx
 
-python setup.py develop
 ```
-
-(torch-lightning and torchmetrics fix [^4])
-
-[^1]:https://github.com/open-mmlab/mmsegmentation/issues/1567
-[^2]:https://github.com/open-mmlab/mmocr/pull/109
-[^3]:https://github.com/gaotongxiao/mmocr/commit/467242af50392b5eab13033ced109f70d2205402
-[^4]:https://lightning.ai/docs/pytorch/latest/versioning.html#pytorch-support
 
 ### Data preparation
 **Step 0.** Download [nuScenes dataset](https://www.nuscenes.org/nuscenes#download).
