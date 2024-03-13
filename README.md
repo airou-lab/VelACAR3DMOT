@@ -5,7 +5,7 @@
 (#TODO)
 
 
-## Getting Started
+## Getting Started / Detection
 
 ### Git
 ```shell
@@ -103,7 +103,7 @@ python [EXP_PATH] --ckpt_path [CKPT_PATH] -e -b 4 --gpus 4
 python exps/det/CRN_r50_256x704_128x128_4key.py --ckpt_path checkpoint/CRN_r50_256x704_128x128_4key.pth -e -b 4 --gpus 1
 ```
 
-## Model Zoo
+### Model Zoo
 All models use 4 keyframes and are trained without CBGS.  
 All latency numbers are measured with batch size 1, GPU warm-up, and FP16 precision.
 
@@ -114,29 +114,21 @@ All latency numbers are measured with batch size 1, GPU warm-up, and FP16 precis
 |   CRN    |   R50    | 56.2 | 47.3 | 22.7 | 61.4 M | [config](exps/det/CRN_r50_256x704_128x128_4key.py)      | [model](https://github.com/youngskkim/CRN/releases/download/v1.0/CRN_r50_256x704_128x128_4key.pth)      |
 
 
-## Features
+### Features
 - [ ] BEV segmentation checkpoints 
 - [ ] BEV segmentation code 
 - [x] 3D detection checkpoints 
 - [x] 3D detection code 
 - [x] Code release 
 
-
-## Tracking
-
-(#TODO)
-
-
-
-
-## Acknowledgement
+### Acknowledgement
 This project is based on excellent open source projects:
 - [BEVDepth](https://github.com/Megvii-BaseDetection/BEVDepth)
 - [BEVFormer](https://github.com/fundamentalvision/BEVFormer)
 - [MMDetection3D](https://github.com/open-mmlab/mmdetection3d)
 
 
-## Citation
+### Citation
 If this work is helpful for your research, please consider citing the following BibTeX entry.
 
 ```bibtex
@@ -147,4 +139,14 @@ If this work is helpful for your research, please consider citing the following 
     pages={17615--17626},
     year={2023}
 }
+
+
+## Tracking
+
+(#TODO)
+
+
+
+
+
 ```
