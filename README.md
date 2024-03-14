@@ -76,7 +76,7 @@ The folder structure will be as follows:
 ExtendedCRN
 ├──Detection
 |   ├── data
-|   │   ├── nuScenes
+|   │   ├── nuScenes (link)
 |   │   │   ├── nuscenes_infos_train.pkl
 |   │   │   ├── nuscenes_infos_val.pkl
 |   │   │   ├── maps
@@ -86,6 +86,9 @@ ExtendedCRN
 |   |   |   ├── radar_bev_filter  # temporary folder, safe to delete
 |   |   |   ├── radar_pv_filter
 |   |   |   ├── v1.0-trainval
+├──data
+|   ├──nuScenes
+
 ```
 
 ### Training and Evaluation
