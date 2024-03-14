@@ -48,7 +48,7 @@ python setup.py develop  # GPU required
 
 **Step 1.** Symlink the dataset folder to `./data/nuScenes/`.
 ```
-ln -s [nuscenes root] ./data/nuScenes/
+ln -s ../../../data/nuScenes ./data/nuScenes/
 ```
 
 **Step 2.** Create annotation file. 
@@ -73,18 +73,19 @@ python scripts/gen_radar_pv.py  # transform to camera coords
 
 The folder structure will be as follows:
 ```
-CRN
-├── data
-│   ├── nuScenes
-│   │   ├── nuscenes_infos_train.pkl
-│   │   ├── nuscenes_infos_val.pkl
-│   │   ├── maps
-│   │   ├── samples
-│   │   ├── sweeps
-|   |   ├── depth_gt
-|   |   ├── radar_bev_filter  # temporary folder, safe to delete
-|   |   ├── radar_pv_filter
-|   |   ├── v1.0-trainval
+ExtendedCRN
+├──Detection
+|   ├── data
+|   │   ├── nuScenes
+|   │   │   ├── nuscenes_infos_train.pkl
+|   │   │   ├── nuscenes_infos_val.pkl
+|   │   │   ├── maps
+|   │   │   ├── samples
+|   │   │   ├── sweeps
+|   |   |   ├── depth_gt
+|   |   |   ├── radar_bev_filter  # temporary folder, safe to delete
+|   |   |   ├── radar_pv_filter
+|   |   |   ├── v1.0-trainval
 ```
 
 ### Training and Evaluation
