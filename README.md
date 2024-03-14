@@ -46,9 +46,9 @@ python setup.py develop  # GPU required
 ### Data preparation
 **Step 0.** Download [nuScenes dataset](https://www.nuscenes.org/nuscenes#download).
 
-**Step 1.** Symlink the dataset folder to `./data/nuScenes/`.
+**Step 1.** Symlink the dataset folder to `./data/`.
 ```
-ln -s ../../../data/nuScenes ./data/nuScenes/
+ln -s ../../../data/nuScenes ./data/
 ```
 
 **Step 2.** Create annotation file. 
