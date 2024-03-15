@@ -150,7 +150,7 @@ If this work is helpful for your research, please consider citing the following 
 # Data links
 Copy detection ouput to keep a backup and pretty print json file. 
 ```
-cd ~/Detection
+cd /home/ws/Detection
 mkdir detection_output
 cp outputs/det/CRN_r50_256x704_128x128_4key/*.json detection_output
 
@@ -159,7 +159,7 @@ jq . results_nusc.json > pretty_printed_results_nusc.txt
 ```
 In the tracking folder, simlink the data and the detection output to the data folder.
 ```
-cd ~/Tracking
+cd /home/ws/Tracking
 mkdir data
 ln -s ../data/nuScenes ./data/
 ln -s ../Detection/detection_output ./data/
