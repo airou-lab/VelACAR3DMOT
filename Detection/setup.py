@@ -4,11 +4,6 @@ import torch
 from setuptools import find_packages, setup
 from torch.utils.cpp_extension import (BuildExtension, CppExtension,
                                        CUDAExtension)
-
-with open('README.md', 'r') as fh:
-    long_description = fh.read()
-
-
 def make_cuda_ext(name,
                   module,
                   sources,
@@ -48,9 +43,6 @@ setup(
     author='KAIST',
     author_email='youngseok.kim@kaist.ac.kr',
     description='Code for CRN',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    url=None,
     packages=find_packages(),
     classifiers=[
         'Programming Language :: Python :: 3',

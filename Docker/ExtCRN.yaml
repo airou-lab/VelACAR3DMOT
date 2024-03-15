@@ -90,4 +90,4 @@ dependencies:
     - tzdata==2023.3
     - urllib3==1.26.18
     - zipp==3.17.0
-prefix: /home/user/anaconda3/envs/CRN
+prefix: /home/user/anaconda3/envs/ExtCRN
