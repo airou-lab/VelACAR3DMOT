@@ -48,7 +48,7 @@ python setup.py develop  # GPU required
 
 **Step 1.** Symlink the dataset folder to `./data/`.
 ```
-ln -s ../../data/nuScenes ./data/
+ln -s ../../../data/nuScenes ./data/
 ```
 
 **Step 2.** Create annotation file. 
@@ -161,8 +161,8 @@ In the tracking folder, simlink the data and the detection output to the data fo
 ```
 cd /home/ws/Tracking
 mkdir data
-ln -s ../data/nuScenes ./data/
-ln -s ../Detection/detection_output ./data/
+ln -s ../../data/nuScenes ./data/
+ln -s ../../Detection/detection_output ./data/
 ```
 Your data folder in the Tracking folder should look like this : 
 ```
