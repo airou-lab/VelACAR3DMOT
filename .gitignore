@@ -1,6 +1,17 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
-# generated folders
+# Data folder containing nuScenes data
+data/
+
+# Detection generated folders
 Detection/checkpoint/
 Detection/data/
+Detection/CRN.egg-info/
+Detection/build/
+Detection/outputs/
+
+# Tracking generated folders
+
+Tracking/data
+
