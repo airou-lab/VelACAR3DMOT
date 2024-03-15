@@ -48,7 +48,7 @@ python setup.py develop  # GPU required
 
 **Step 1.** Symlink the dataset folder to `./data/`.
 ```
-ln -s ../../../data/nuScenes ./data/
+ln -s ../../data/nuScenes ./data/
 ```
 
 **Step 2.** Create annotation file. 
@@ -147,10 +147,50 @@ If this work is helpful for your research, please consider citing the following 
 
 ## Tracking
 
+# Data links
+Copy detection ouput to keep a backup and pretty print json file. 
+```
+cd ~/Detection
+mkdir detection_output
+cp outputs/det/CRN_r50_256x704_128x128_4key/*.json detection_output
+
+cd detection_output
+jq . results_nusc.json > pretty_printed_results_nusc.txt
+```
+In the tracking folder, simlink the data and the detection output to the data folder.
+```
+cd ~/Tracking
+mkdir data
+ln -s ../data/nuScenes ./data/
+ln -s ../Detection/detection_output ./data/
+```
+Your data folder in the Tracking folder should look like this : 
+```
+ExtendedCRN
+├──Tracking
+|   ├── data
+|   │   ├── nuScenes (link)
+|   │   ├── detection-output (link)
+│   |   │   ├── metrics_details.json
+│   |   │   ├── metrics_summary.json
+│   |   │   ├── pretty_printed_results_nusc.txt
+│   |   │   ├── results_nusc.json
+├──data
+|   ├──nuScenes
+├──Detection
+|   ├──detection_output
+│   |   │   ├── metrics_details.json
+│   |   │   ├── metrics_summary.json
+│   |   │   ├── pretty_printed_results_nusc.txt
+│   |   │   ├── results_nusc.json
+
+```
+# Data formatting
+
 (#TODO)
 
 
 
 
 
-```
+
