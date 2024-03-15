@@ -10,6 +10,7 @@ Detection/data/
 Detection/CRN.egg-info/
 Detection/build/
 Detection/outputs/
+Detection/detection_output/
 
 # Tracking generated folders
 

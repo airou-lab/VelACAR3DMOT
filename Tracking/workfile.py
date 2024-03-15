@@ -70,6 +70,29 @@ def get_sample_info(nusc,sensor,token,verbose=False):
             print ('token NOT in:',scene['name'])
     return 0
 
+def get_total_scenes_list(nusc,sensor):
+    scenes = nusc.scene
+    scenes_list=[]
+    for scene in scenes :
+        scenes_list.append(scene['name'])
+        # print (scene)
+        # first_sample = nusc.get('sample', scene['first_sample_token']) # sample 0
+        # sample_data = nusc.get('sample_data', first_sample['data'][sensor])   # data for sample 0
+        # print(sample_data)
+        # input()
+
+    return scenes_list
+
+def get_scenes_list(path):
+    scenes_list = []
+
+    # listing scenes
+    for scene in os.listdir(path):
+        scenes_list.append(scene)
+    
+    return scenes_list
+
+
 
 ############################################################################################################################################################################
 # Pipeline
@@ -140,9 +163,66 @@ def separate_det_by_cat_and_samples(output_root,detection_file,detection_method,
                 print('count = ',count-1)
 
 
-def data_association(cat_list):
+# def data_association(cat_list,nusc,sensor):
+
+    
+
+
+if __name__ == '__main__':
+
+    cat_list = ['pedestrian', 'car', 'truck', 'bus', 'bicycle', 'construction_vehicle', 'motorcycle', 'trailer']
+    data_root = './data/nuScenes'
+    cat_detection_root = './data/cat_detection/'
+    detection_method = 'CRN'
+    sensor = 'CAM_FRONT'
+    split = 'train'
+    det_thresh = 0.5
+
+    nusc = load_nusc(split)
+
+    # separate_det_by_cat_and_samples(output_root=cat_detection_root,
+    #                                 detection_file = './detection_results/results_nusc.json',
+    #                                 detection_method = detection_method,
+    #                                 sensor = sensor,
+    #                                 cat_list=cat_list,
+    #                                 nusc=nusc,
+    #                                 det_thresh=det_thresh
+    #                                 )
+
+
+    # data_association(cat_list=cat_list,nusc=nuscs,)
+
+
 
     for cat in cat_list:
+
+        scenes_list=get_scenes_list(os.path.join(cat_detection_root,detection_method+'_'+cat))
+
+        for scene_file in scenes_list:
+            print(scene_file)
+            f = open(os.path.join(cat_detection_root,detection_method+'_'+cat,scene_file),'r')
+
+            for line in f:
+                det = f.readline()
+                t,x,y,z,w,l,h,r1,r2,r3,r4,v1,v2 = det.split(',')
+                print('t = ',t)
+                print ('x = ',x)
+                print ('y = ',y)
+                print ('z = ',z)
+                print ('w = ',w)
+                print ('l = ',l)
+                print ('h = ',h)
+                print ('r1 = ',r1)
+                print ('r2 = ',r2)
+                print ('r3 = ',r3)
+                print ('r4 = ',r4)
+                print ('v1 = ',v1)
+                print ('v2 = ',v2)
+
+                exit()
+
+            exit()
+
         '''
         TODO : if detection of this category : check mahalanobis distance with Kalman pred (??) => in any cane use kalman pred to associate
         if association found : add to Tm
@@ -155,26 +235,3 @@ def data_association(cat_list):
         at t=t+1 
         in any case speed in used for prediction of futur position
         '''
-        
-
-
-if __name__ == '__main__':
-
-    cat_list = ['pedestrian', 'car', 'truck', 'bus', 'bicycle', 'construction_vehicle', 'motorcycle', 'trailer']
-    data_root = './data/nuScenes'
-    split = 'train'
-    det_thresh = 0.5
-
-    nusc = load_nusc(split)
-
-    separate_det_by_cat_and_samples(output_root='./data/tracking_output/',
-                                    detection_file = './detection_results/results_nusc.json',
-                                    detection_method = 'CRN',
-                                    sensor = 'CAM_FRONT',
-                                    cat_list=cat_list,
-                                    nusc=nusc,
-                                    det_thresh=det_thresh
-                                    )
-
-
-    data_association(cat_list=cat_list)
