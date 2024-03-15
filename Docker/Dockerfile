@@ -10,6 +10,7 @@ RUN apt-get update \
     && apt-get install -y build-essential \
     && apt-get install -y python3-pip python3-dev \
     && apt-get install -y wget \
+    && apt-get install -y jq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
