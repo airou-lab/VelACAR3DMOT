@@ -33,6 +33,7 @@ RUN conda env create --file /tmp/ExtCRN.yaml
 RUN echo "source activate ExtCRN" > ~/.bashrc
 ENV PATH /opt/conda/envs/ExtCRN/bin:$PATH
 
+# Detection libs
 RUN pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
 RUN pip install pytorch-lightning==1.6.0
 RUN pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
@@ -40,6 +41,9 @@ RUN pip install torchmetrics==0.4.1
 RUN mim install mmcv==1.6.0
 RUN mim install mmsegmentation==0.28.0
 RUN mim install mmdet==2.25.2
+
+# Tracking libs
+RUN pip install filterpy==1.4.5
 
 # Moving to /ws (workspace) directory
 WORKDIR /home/ws
