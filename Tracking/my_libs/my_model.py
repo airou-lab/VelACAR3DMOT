@@ -74,19 +74,18 @@ class AB3DMOT(object):
 
 	def format_dets_df (self,dets_df):
 		'''
-		Takes a dataframe in the format : [t,x,y,z,w,l,h,r1,r2,r3,r4,vx,vy,vz,token]
-		and return formatted_df in the format : [x,y,z,w,l,h,theta] for associations
-		and a info_df in the format : [t,r1,r2,r3,r4,vx,vy,vz,token] containing the remaining informations
+		Takes a dataframe in the format : [t,x,y,z,w,l,h,r1,r2,r3,r4,vx,vy,vz,score,token]
+		and return formatted_df in the format : [x,y,z,w,l,h,theta,score] for associations
+		and a info_df in the format : [vx,vy,vz,r1,r2,r3,r4,score,token] containing the remaining informations
 		'''
 		print (dets_df)
 		print (100*'#')
 		formatted_df = copy.deepcopy(dets_df)
 		info_df = copy.deepcopy(dets_df)
 
-		formatted_df = formatted_df.drop(['t','vx','vy','vz','token'],axis=1)				#[x,y,z,w,l,h,r1,r2,r3,r4]
-		info_df = info_df.drop(['x','y','z','w','l','h','r1','r2','r3','r4'],axis=1)		#[t,vx,vy,vz,token]
-
-		# print (formatted_df.index)
+		formatted_df = formatted_df.drop(['t','vx','vy','vz','score','token'],axis=1)	#[x,y,z,w,l,h,r1,r2,r3,r4]
+		info_df = info_df.drop(['t','x','y','z','w','l','h',],axis=1)					#[r1,r2,r3,r4,vx,vy,vz,score,token]
+		info_df = info_df.loc[:,['vx','vy','vz','r1','r2','r3','r4','score','token']]
 
 		theta_list = []
 		for i in formatted_df.index:
@@ -253,7 +252,7 @@ class AB3DMOT(object):
 
 				# update orientation in propagated tracks and detected boxes so that they are within 90 degree
 				bbox3d = Box3D.bbox2array(dets[d[0]])
-				vel = info[d, [1,2,3]]
+				vel = info[d, :3]
 				trk.kf.x[3], bbox3d[3] = self.orientation_correction(trk.kf.x[3], bbox3d[3])
 
 				if trk.id == self.debug_id:
@@ -269,7 +268,7 @@ class AB3DMOT(object):
 				# kalman filter update with observation (box and velocity)
 				trk.kf.update(bbox3d)
 				trk.kf.x[7:,0]=vel
-				
+
 				if trk.id == self.debug_id:
 					print('after matching')
 					print(trk.kf.x.reshape((-1)))
@@ -277,7 +276,7 @@ class AB3DMOT(object):
 					print(trk.get_velocity())
 
 				trk.kf.x[3] = self.within_range(trk.kf.x[3])
-				trk.info = info[d, 4:][0]
+				trk.info = info[d, 3:][0]
 
 			# debug use only
 			# else:
@@ -290,7 +289,7 @@ class AB3DMOT(object):
 		new_id_list = list()					# new ID generated for unmatched detections
 
 		for i in unmatched_dets:        			# a scalar of index
-			trk = KF(Box3D.bbox2array(dets[i]), info[i, [1,2,3]], info[i, 4:], self.ID_count[0])
+			trk = KF(Box3D.bbox2array(dets[i]), info[i, :3], info[i, 3:], self.ID_count[0])
 			self.trackers.append(trk)
 			new_id_list.append(trk.id)
 			# print('track ID %s has been initialized due to new detection' % trk.id)
@@ -310,14 +309,14 @@ class AB3DMOT(object):
 			d = Box3D.bbox2array_raw(d)
 
 			if ((trk.time_since_update < self.max_age) and (trk.hits >= self.min_hits or self.frame_count <= self.min_hits)):      
-				results.append(np.concatenate((d, [trk.id], trk.info)).reshape(1, -1)) 	#[h,w,l,x,y,z,theta,ID,t,vx,vy,vz,token]
+				results.append(np.concatenate((d, [trk.id], trk.info[4:])).reshape(1, -1)) 	#[h,w,l,x,y,z,theta,ID,score,token]
 
 			num_trks -= 1
 
 			# death, remove dead tracklet
 			if (trk.time_since_update >= self.max_age): 
 				self.trackers.pop(num_trks)
-		
+
 		return results
 
 	def process_affi(self, affi, matched, unmatched_dets, new_id_list):
@@ -404,8 +403,12 @@ class AB3DMOT(object):
 		"""
 		dets, info = self.format_dets_df(dets_all)
 		# dets - a dataframe of detections in the format ['x','y','z','w','l','h','theta']
-		# 		info: a array of other info for each det ['t','vx','vy','vz','token']	#TODO : add confidance
+		# 		info: a array of other info for each det [vx,vy,vz,r1,r2,r3,r4,score,token]
 		
+		print('dets dataframe :')
+		print(dets)
+
+
 		if self.debug_id: print('\nframe is %s' % frame_number)
 	
 		# logging

@@ -47,11 +47,11 @@ class KF(Filter):
 		                      [0,0,0,0,0,1,0,0,0,0],
 		                      [0,0,0,0,0,0,1,0,0,0]])
 
-		# measurement uncertainty, uncomment if not super trust the measurement data due to detection noise
+		# measurement uncertainty, uncomment if measurement data cannot be trusted due to detection noise
 		# self.kf.R[0:,0:] *= 10.   
 
 		# initial state uncertainty at time 0
-		# Given a single data, the initial velocity is very uncertain, so giv a high uncertainty to start
+		# Given a single data, the initial velocity is very uncertain, so give a high uncertainty to start
 		self.kf.P[7:, 7:] *= 1000. 	
 		self.kf.P *= 10.
 
@@ -63,8 +63,9 @@ class KF(Filter):
 		self.kf.x[7:] = self.initial_vel.reshape((3, 1))
 
 	def compute_innovation_matrix(self):
-		""" compute the innovation matrix for association with mahalanobis distance
-		"""
+		''' 
+		compute the innovation matrix for association with mahalanobis distance
+		'''
 		return np.matmul(np.matmul(self.kf.H, self.kf.P), self.kf.H.T) + self.kf.R
 
 	def get_velocity(self):
