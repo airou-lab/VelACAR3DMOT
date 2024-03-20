@@ -105,32 +105,12 @@ class AB3DMOT(object):
 
 		    # Measure yaw using arctan.
 			yaw_angle = np.arctan2(v[1], v[0])
-			 
-			# # theta_list.append((qw,qx,qy,qz)) 
-
-			# print(4*'\n')
-			# print(100*'#')
-			# test = quaternion.rotation_matrix
-			# print (test)
-			# print(100*'#')
-			# print(4*'\n')
-
-			# # theta_test = Quaternion (qy)
-			# # theta_test_rot = theta_test.radians
-			# # print(theta_test)
-
-			# v = np.dot(quaternion.rotation_matrix, np.array([1, 0, 0]))
-			# yaw = -np.arctan2(v[2], v[0])
-
-			# print(yaw)
-
+			
 			# numerator = 2 * (quaternion[0]*quaternion[3]+quaternion[1]*quaternion[2])
 			# denominator = 1 - (2*(np.square(quaternion[2])+np.square(quaternion[3])))
 
 			# yaw_angle = np.arctan2(numerator, denominator)
 			
-			# print (yaw_angle)
-			# exit()
 			theta_list.append(yaw_angle) 
 
 
@@ -251,7 +231,7 @@ class AB3DMOT(object):
 				print(kf_tmp.kf.x.reshape((-1)))
 			kf_tmp.kf.x[3] = self.within_range(kf_tmp.kf.x[3])
 
-			# update statistics
+			# update statistics	
 			kf_tmp.time_since_update += 1 		
 			trk_tmp = kf_tmp.kf.x.reshape((-1))[:7]
 			trks.append(Box3D.array2bbox(trk_tmp))
@@ -265,7 +245,7 @@ class AB3DMOT(object):
 		for t, trk in enumerate(self.trackers):
 			if t not in unmatched_trks:
 				d = matched[np.where(matched[:, 1] == t)[0], 0]     # a list of index
-				assert len(d) == 1, 'error'
+				assert len(d) == 1, 'error : more than one association'
 
 				# update statistics
 				trk.time_since_update = 0		# reset because just updated
@@ -277,19 +257,19 @@ class AB3DMOT(object):
 				trk.kf.x[3], bbox3d[3] = self.orientation_correction(trk.kf.x[3], bbox3d[3])
 
 				if trk.id == self.debug_id:
-					print('After ego-compoensation')
+					print('After ego-compensation')
 					print(trk.kf.x.reshape((-1)))
 					print('matched measurement')
 					print(bbox3d.reshape((-1)))
-					# print('uncertainty')
-					# print(trk.kf.P)
-					# print('measurement noise')
-					# print(trk.kf.R)
+					print('uncertainty')
+					print(trk.kf.P)
+					print('measurement noise')
+					print(trk.kf.R)
 
 				# kalman filter update with observation (box and velocity)
-				# trk.kf.update(np.hstack((bbox3d,vel)))
 				trk.kf.update(bbox3d)
-
+				trk.kf.x[7:,0]=vel
+				
 				if trk.id == self.debug_id:
 					print('after matching')
 					print(trk.kf.x.reshape((-1)))
@@ -314,7 +294,6 @@ class AB3DMOT(object):
 			self.trackers.append(trk)
 			new_id_list.append(trk.id)
 			# print('track ID %s has been initialized due to new detection' % trk.id)
-
 			self.ID_count[0] += 1
 
 		return new_id_list

@@ -53,8 +53,8 @@ def data_association(dets, trks, metric, threshold, algm='greedy', \
 	"""
 	Assigns detections to tracked object
 
-	dets:  a list of Box3D object
-	trks:  a list of Box3D object
+	dets:  a list of Box3D object 	(Detection at t=t)
+	trks:  a list of Box3D object 	(Prediction at t=t from detection at t=t-1)
 
 	Returns 3 lists of matches, unmatched_dets and unmatched_trks, and total cost, and affinity matrix
 	"""
