@@ -15,3 +15,11 @@ Detection/detection_output/
 # Tracking generated folders
 Tracking/data
 Tracking/Xinshuo_PyToolbox
+Tracking/AAB3DMOT_libs
+Tracking/configs
+Tracking/docs
+Tracking/external
+Tracking/scripts
+Tracking/*.gif
+
+
