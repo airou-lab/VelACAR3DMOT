@@ -2,17 +2,24 @@ import numpy as np
 from filterpy.kalman import KalmanFilter, UnscentedKalmanFilter, MerweScaledSigmaPoints
 
 class Filter(object):
-	def __init__(self, bbox3D, info, ID):
+	def __init__(self, bbox3D, velocity, info, ID):
 
 		self.initial_pos = bbox3D
+		self.initial_vel = velocity
 		self.time_since_update = 0
 		self.id = ID
 		self.hits = 1           		# number of total hits including the first detection
 		self.info = info        		# other information associated	
 
 class KF(Filter):
-	def __init__(self, bbox3D, info, ID):
-		super().__init__(bbox3D, info, ID)
+	def __init__(self, bbox3D, velocity, info, ID):
+		super().__init__(bbox3D, velocity, info, ID)
+
+		# print(self.initial_pos)
+		# print(self.initial_vel)
+		# print(self.info)
+		# print(self.id)
+		# exit()
 
 		self.kf = KalmanFilter(dim_x=10, dim_z=7)       
 		# There is no need to use EKF here as the measurement and state are in the same space with linear relationship
@@ -53,6 +60,7 @@ class KF(Filter):
 
 		# initialize data
 		self.kf.x[:7] = self.initial_pos.reshape((7, 1))
+		self.kf.x[7:] = self.initial_vel.reshape((3, 1))
 
 	def compute_innovation_matrix(self):
 		""" compute the innovation matrix for association with mahalanobis distance

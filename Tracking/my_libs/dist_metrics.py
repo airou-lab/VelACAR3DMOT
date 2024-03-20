@@ -2,6 +2,7 @@ import numpy as np, time
 from numba import jit
 from scipy.spatial import ConvexHull
 from my_libs.box import Box3D
+from nuscenes.utils.data_classes import Box as nuscBox3D
 
 def polygon_clip(subjectPolygon, clipPolygon):
 	""" Clip a polygon with another polygon.
@@ -92,7 +93,7 @@ def compute_bottom(box_a, box_b):
 
 	corners1 = Box3D.box2corners3d_camcoord(box_a) 	# 8 x 3
 	corners2 = Box3D.box2corners3d_camcoord(box_b)	# 8 x 3
-	
+
 	# get bottom corners and inverse order so that they are in the 
 	# counter-clockwise order to fulfill polygon_clip
 	boxa_bot = corners1[-5::-1, [0, 2]] 		# 4 x 2
@@ -140,6 +141,7 @@ def iou(box_a, box_b, metric='giou_3d'):
 	'''	
 
 	# compute 2D related measures
+
 	boxa_bot, boxb_bot = compute_bottom(box_a, box_b)
 	I_2D = compute_inter_2D(boxa_bot, boxb_bot)
 

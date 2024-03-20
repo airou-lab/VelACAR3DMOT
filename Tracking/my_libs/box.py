@@ -59,6 +59,15 @@ class Box3D:
             bbox.s = data[-1]
         return bbox
     
+    @staticmethod
+    def roty(t):
+        """Rotation about the y-axis."""
+        c = np.cos(t)
+        s = np.sin(t)
+        return np.array([[c,  0,  s],
+                         [0,  1,  0],
+                         [-s, 0,  c]])
+
     @classmethod
     def box2corners3d_camcoord(cls, bbox):
         ''' Takes an object's 3D box with the representation of [x,y,z,theta,l,w,h] and 
@@ -89,7 +98,7 @@ class Box3D:
 
         # compute rotational matrix around yaw axis
         # -1.57 means straight, so there is a rotation here
-        R = roty(bbox.ry)   
+        R = Box3D.roty(bbox.ry)  
 
         # 3d bounding box dimensions
         l, w, h = bbox.l, bbox.w, bbox.h
@@ -98,6 +107,22 @@ class Box3D:
         x_corners = [l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2];
         y_corners = [0,0,0,0,-h,-h,-h,-h];
         z_corners = [w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2];
+
+
+        '''
+        Nuscenes function box.corners:
+        Cannot use this because requires me to create a nuscenes box object => carrying quaternion value 
+        in the pipeline => changes EVERYWHERE including in kalman filter (box3D object currently carried)
+        around and it is the predicted object by kalman filter.
+        modifying this => modifying a lot of the pipeline.
+
+        # 3D bounding box corners. (Convention: x points forward, y to the left, z up.) => different convention than camera setup...
+        x_corners = l / 2 * np.array([1,  1,  1,  1, -1, -1, -1, -1])
+        y_corners = w / 2 * np.array([1, -1, -1,  1,  1, -1, -1,  1])
+        z_corners = h / 2 * np.array([1,  1, -1, -1,  1,  1, -1, -1])
+        corners = np.vstack((x_corners, y_corners, z_corners))
+        '''
+
 
         # rotate and translate 3d bounding box
         corners_3d = np.dot(R, np.vstack([x_corners, y_corners, z_corners]))

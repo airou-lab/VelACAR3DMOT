@@ -12,10 +12,10 @@ def compute_affinity(dets, trks, metric, trk_inv_inn_matrices=None):
 
 			# choose to use different distance metrics
 			if 'iou' in metric:    	  dist_now = iou(det, trk, metric)            
-			elif metric == 'm_dis':   dist_now = -m_distance(det, trk, trk_inv_inn_matrices[t])
-			elif metric == 'euler':   dist_now = -m_distance(det, trk, None)
-			elif metric == 'dist_2d': dist_now = -dist_ground(det, trk)              	
-			elif metric == 'dist_3d': dist_now = -dist3d(det, trk)              				
+			# elif metric == 'm_dis':   dist_now = -m_distance(det, trk, trk_inv_inn_matrices[t])
+			# elif metric == 'euler':   dist_now = -m_distance(det, trk, None)
+			# elif metric == 'dist_2d': dist_now = -dist_ground(det, trk)              	
+			# elif metric == 'dist_3d': dist_now = -dist3d(det, trk)              				
 			else: assert False, 'error'
 			aff_matrix[d, t] = dist_now
 

@@ -96,14 +96,43 @@ class AB3DMOT(object):
 			qx = formatted_df.iloc[i]['r2']
 			qy = formatted_df.iloc[i]['r3']
 			qz = formatted_df.iloc[i]['r4']
-			quaternion = [qw,qx,qy,qz]
+			# quaternion = [qw,qx,qy,qz]
+			quaternion = Quaternion(qw,qx,qy,qz)
 
-			numerator = 2 * (quaternion[0]*quaternion[3]+quaternion[1]*quaternion[2])
-			denominator = 1 - (2*(np.square(quaternion[2])+np.square(quaternion[3])))
 
-			yaw_angle = np.arctan2(numerator, denominator)
+			# Project into xy plane.
+			v = np.dot(quaternion.rotation_matrix, np.array([1, 0, 0]))
+
+		    # Measure yaw using arctan.
+			yaw_angle = np.arctan2(v[1], v[0])
+			 
+			# # theta_list.append((qw,qx,qy,qz)) 
+
+			# print(4*'\n')
+			# print(100*'#')
+			# test = quaternion.rotation_matrix
+			# print (test)
+			# print(100*'#')
+			# print(4*'\n')
+
+			# # theta_test = Quaternion (qy)
+			# # theta_test_rot = theta_test.radians
+			# # print(theta_test)
+
+			# v = np.dot(quaternion.rotation_matrix, np.array([1, 0, 0]))
+			# yaw = -np.arctan2(v[2], v[0])
+
+			# print(yaw)
+
+			# numerator = 2 * (quaternion[0]*quaternion[3]+quaternion[1]*quaternion[2])
+			# denominator = 1 - (2*(np.square(quaternion[2])+np.square(quaternion[3])))
+
+			# yaw_angle = np.arctan2(numerator, denominator)
 			
+			# print (yaw_angle)
+			# exit()
 			theta_list.append(yaw_angle) 
+
 
 		formatted_df.insert(6,'theta',theta_list)
 		formatted_df=formatted_df.drop(['r1','r2','r3','r4'],axis=1)		#[x,y,z,w,l,h,theta]
@@ -244,6 +273,7 @@ class AB3DMOT(object):
 
 				# update orientation in propagated tracks and detected boxes so that they are within 90 degree
 				bbox3d = Box3D.bbox2array(dets[d[0]])
+				vel = info[d, [1,2,3]]
 				trk.kf.x[3], bbox3d[3] = self.orientation_correction(trk.kf.x[3], bbox3d[3])
 
 				if trk.id == self.debug_id:
@@ -256,7 +286,8 @@ class AB3DMOT(object):
 					# print('measurement noise')
 					# print(trk.kf.R)
 
-				# kalman filter update with observation
+				# kalman filter update with observation (box and velocity)
+				# trk.kf.update(np.hstack((bbox3d,vel)))
 				trk.kf.update(bbox3d)
 
 				if trk.id == self.debug_id:
@@ -266,7 +297,7 @@ class AB3DMOT(object):
 					print(trk.get_velocity())
 
 				trk.kf.x[3] = self.within_range(trk.kf.x[3])
-				trk.info = info[d, :][0]
+				trk.info = info[d, 4:][0]
 
 			# debug use only
 			# else:
@@ -278,18 +309,11 @@ class AB3DMOT(object):
 		dets = copy.deepcopy(dets)
 		new_id_list = list()					# new ID generated for unmatched detections
 
-		# print(unmatched_dets)
-		# print(dets)
-		# print(dets[0])
-		# print(type(dets))
-		# print('\n\n')
-
 		for i in unmatched_dets:        			# a scalar of index
-
-			trk = KF(Box3D.bbox2array(dets[i]), info[i, :], self.ID_count[0])
+			trk = KF(Box3D.bbox2array(dets[i]), info[i, [1,2,3]], info[i, 4:], self.ID_count[0])
 			self.trackers.append(trk)
 			new_id_list.append(trk.id)
-			print('track ID %s has been initialized due to new detection' % trk.id)
+			# print('track ID %s has been initialized due to new detection' % trk.id)
 
 			self.ID_count[0] += 1
 
@@ -307,13 +331,14 @@ class AB3DMOT(object):
 			d = Box3D.bbox2array_raw(d)
 
 			if ((trk.time_since_update < self.max_age) and (trk.hits >= self.min_hits or self.frame_count <= self.min_hits)):      
-				results.append(np.concatenate((d, [trk.id], trk.info)).reshape(1, -1)) 		
+				results.append(np.concatenate((d, [trk.id], trk.info)).reshape(1, -1)) 	#[h,w,l,x,y,z,theta,ID,t,vx,vy,vz,token]
+
 			num_trks -= 1
 
-			# deadth, remove dead tracklet
+			# death, remove dead tracklet
 			if (trk.time_since_update >= self.max_age): 
 				self.trackers.pop(num_trks)
-
+		
 		return results
 
 	def process_affi(self, affi, matched, unmatched_dets, new_id_list):
@@ -431,8 +456,8 @@ class AB3DMOT(object):
 
 		# matching
 		trk_innovation_matrix = None
-		if self.metric == 'm_dis':
-			trk_innovation_matrix = [trk.compute_innovation_matrix() for trk in self.trackers] 
+		# if self.metric == 'm_dis':
+		# 	trk_innovation_matrix = [trk.compute_innovation_matrix() for trk in self.trackers] 
 		
 		matched, unmatched_dets, unmatched_trks, cost, affi = \
 			data_association(dets, trks, self.metric, self.thres, self.algm, trk_innovation_matrix)
@@ -453,9 +478,6 @@ class AB3DMOT(object):
 
 		# update trks with matched detection measurement
 		self.update(matched, unmatched_trks, dets, info)
-
-		# print('matched indexes are')
-		# print(matched)
 		
 
 		# create and initialise new trackers for unmatched detections

@@ -208,13 +208,14 @@ def get_det_df(cat_detection_root,detection_method,cat,det_file,verbose=False):
 def get_det_df_at_t(cat_detection_root,detection_method,cat,det_file,t):
     df = get_det_df(cat_detection_root,detection_method,cat,det_file)
     df_at_t = df.loc[df['t']==t]
+    df_at_t.reset_index(drop=True,inplace=True)
     return df_at_t
 
 ############################################################################################################################################################################
 # Pipeline
 ############################################################################################################################################################################
 
-def separate_det_by_cat_and_samples(output_root,detection_file,detection_method,sensor,cat_list,nusc):
+def separate_det_by_cat_and_samples(output_root,detection_file,detection_method,sensor,cat_list,nusc,score_thresh):
 
     mkdir_if_missing(output_root)
 
@@ -249,7 +250,7 @@ def separate_det_by_cat_and_samples(output_root,detection_file,detection_method,
                 det_cnt = 0
                 for det_sample in dets:
 
-                    if det_sample['detection_name']==cat:
+                    if det_sample['detection_name']==cat and det_sample['detection_score']>=score_thresh:
                         det_cnt+=1          #detection counter
     
                         f.write(str(count))
@@ -300,21 +301,23 @@ if __name__ == '__main__':
     detection_method = 'CRN'
     sensor = 'CAM_FRONT'
     split = 'train'
+    score_thresh = 0.2
 
     nusc = load_nusc(split)
 
     # separate_det_by_cat_and_samples(output_root=cat_detection_root,
-    #                                 detection_file = './detection_results/results_nusc.json',
+    #                                 detection_file = './data/detection_output/results_nusc.json',
     #                                 detection_method = detection_method,
     #                                 sensor = sensor,
     #                                 cat_list=cat_list,
-    #                                 nusc=nusc
+    #                                 nusc=nusc,
+    #                                 score_thresh=score_thresh
     #                                 )
 
     for cat in cat_list:        
 
         '''
-        TODO : if detection of this category : check mahalanobis distance with Kalman pred
+        TODO : if detection of this category : check mahalanobis (or IoU) distance with Kalman pred
         if association found : add to Tm
         if no association found : Tn = Birth of new track
 
@@ -340,9 +343,17 @@ if __name__ == '__main__':
             print(scene)
             print()
             
+            print('first sample :')
+            # input()
+
+
             sample_token = first_token
 
             for sample_number in range(scene['nbr_samples']):
+
+                print ('t = ',sample_number)
+                input()
+
                 sample = nusc.get('sample', sample_token) # sample 0
                 sample_data = nusc.get('sample_data', sample['data'][sensor])   # data for sample 0
 
@@ -350,14 +361,6 @@ if __name__ == '__main__':
                 sensor_record, cam_intrinsic = get_sensor_data(nusc,sensor,sample_token)
 
                 det_df = get_det_df_at_t(cat_detection_root,detection_method,cat,det_file,sample_number)
-
-            
-                results, affi = tracker.track(det_df, sample_number, scene['name'])
-
-                print('results:',results)
-                print('affi:',affi)
-
-                exit()
 
                 print('t =',sample_number)
                 print(200*'-','\n')
@@ -376,9 +379,24 @@ if __name__ == '__main__':
                 print ('\nDetection token:',det_df['token'][0])
                 print('\n',200*'-','\n')
 
-                
+                print('resume tracking :')
+                # input()
+
+                results, affi = tracker.track(det_df, sample_number, scene['name'])
+
+                print('\n',200*'-','\n')
+                print ('tracking results:',results)
+                print ('affinity matrix:',affi)
+                print('\n',200*'-','\n')                
+
+
 
                 sample_token = sample['next']   # last sample should be: ''
-                exit()
+                
+                print('next sample :')
+                # input()
+
+                if sample_number==1:
+                    exit()
 
 # TODO : ADD confidence rates
