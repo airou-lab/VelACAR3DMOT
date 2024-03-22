@@ -27,6 +27,7 @@ cd ~/Documents/ExtendedCRN/Docker
 sudo docker build -t extcrn_image:v1 .
 
 # Creating mounted gpu-enabled container
+xhost local:root	# Input this for every new shell
 sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
 
 # To have a GUI-enabled container :
