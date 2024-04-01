@@ -638,7 +638,7 @@ def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intr
 
     max_color = 40
     colors = random_colors(max_color)       # Generate random colors
-    colors = fixed_colors(max_color)
+    # colors = fixed_colors(max_color)      # work in progress : having a color list to identify ID
 
     # img_data = Image.open(image_path)
     # read the image 
