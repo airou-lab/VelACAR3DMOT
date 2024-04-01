@@ -104,9 +104,9 @@ class AB3DMOT(object):
 
 		    # Measure yaw using arctan.
 			yaw_angle = np.arctan2(v[1], v[0])
-			
-			# numerator = 2 * (quaternion[0]*quaternion[3]+quaternion[1]*quaternion[2])
-			# denominator = 1 - (2*(np.square(quaternion[2])+np.square(quaternion[3])))
+
+			# numerator = 2 * (qw*qx + qy*qz)
+			# denominator = 1 - 2*(qx*qx + qy*qy)
 
 			# yaw_angle = np.arctan2(numerator, denominator)
 			
@@ -307,15 +307,15 @@ class AB3DMOT(object):
 			# change format from [x,y,z,theta,l,w,h] to [h,w,l,x,y,z,theta]
 			d = Box3D.array2bbox(trk.kf.x[:7].reshape((7, )))     # bbox location self
 			d = Box3D.bbox2array_raw(d)
-
+			vx,vy = trk.kf.x[7:9]
 			if ((trk.time_since_update < self.max_age) and (trk.hits >= self.min_hits or self.frame_count <= self.min_hits)):      
-				results.append(np.concatenate((d, [trk.id], trk.info[4:])).reshape(1, -1)) 	#[h,w,l,x,y,z,theta,ID,score,token]
-
+				results.append(np.concatenate((d, vx, vy, [trk.id], trk.info)).reshape(1, -1)) 	#[h,w,l,x,y,z,theta,vx,vy,ID,quaternions,score,token]
 			num_trks -= 1
 
 			# death, remove dead tracklet
 			if (trk.time_since_update >= self.max_age): 
 				self.trackers.pop(num_trks)
+				print('Death of tracklet',num_trks)
 
 		return results
 
@@ -457,6 +457,7 @@ class AB3DMOT(object):
 		print('raw affinity matrix is')
 		print(affi)
 
+		# input()
 
 		# update trks with matched detection measurement
 		self.update(matched, unmatched_trks, dets, info)
@@ -469,8 +470,9 @@ class AB3DMOT(object):
 
 		# output existing valid tracks
 		results = self.output()
-		if len(results) > 0: results = [np.concatenate(results)]		# x,y,z,h,w,l,theta, ID, other info, confidence
+		if len(results) > 0: results = [np.concatenate(results)]		# x,y,z,h,w,l,theta, vel, ID, other info, confidence
 		else:            	 results = [np.empty((0, 15))]
+
 		self.id_now_output = results[0][:, 7].tolist()					# only the active tracks that are outputed
 
 		# post-processing affinity to convert to the affinity between resulting tracklets
