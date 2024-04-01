@@ -26,7 +26,7 @@ class KF(Filter):
 
 		# state x dimension 10: x, y, z, theta, l, w, h, dx, dy, dz
 		# constant velocity model: x' = x + dx, y' = y + dy, z' = z + dz 
-		# while all others (theta, l, w, h, dx, dy, dz) remain the same
+		# while all others (theta, l, w, h) remain the same
 		self.kf.F = np.array([[1,0,0,0,0,0,0,1,0,0],      # state transition matrix, dim_x * dim_x
 		                      [0,1,0,0,0,0,0,0,1,0],
 		                      [0,0,1,0,0,0,0,0,0,1],
