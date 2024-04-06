@@ -56,7 +56,9 @@ class KF(Filter):
 		self.kf.P *= 10.
 
 		# process uncertainty, make the constant velocity part more certain
-		self.kf.Q[7:, 7:] *= 0.01
+		velocity_accuracy = 0.1/3.6 # Nuscenes datasheet specifies a velocity accuracy of 0.1 km/h
+		self.kf.Q = np.diag([0,0,0,0,0,0,0,velocity_accuracy**2,velocity_accuracy**2,velocity_accuracy**2])
+		# self.kf.Q[7:, 7:] *= 0.01
 
 		# initialize data
 		self.kf.x[:7] = self.initial_pos.reshape((7, 1))
