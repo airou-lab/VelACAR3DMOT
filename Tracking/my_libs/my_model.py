@@ -30,6 +30,7 @@ class AB3DMOT(object):
 
 		# config
 		self.cat = cat
+		self.sampling_freq=12 #Hz
 		# self.ego_com = cfg.ego_com 			# ego motion compensation
 		self.calib = calib
 		self.oxts = oxts
@@ -78,14 +79,14 @@ class AB3DMOT(object):
 		and return formatted_df in the format : [x,y,z,w,l,h,theta,score] for associations
 		and a info_df in the format : [vx,vy,vz,r1,r2,r3,r4,score,token] containing the remaining informations
 		'''
-		print (dets_df)
-		print (100*'#')
+		# print (dets_df)
+		# print (100*'#')
 		formatted_df = copy.deepcopy(dets_df)
 		info_df = copy.deepcopy(dets_df)
 
-		formatted_df = formatted_df.drop(['t','vx','vy','vz','score','token'],axis=1)	#[x,y,z,w,l,h,r1,r2,r3,r4]
-		info_df = info_df.drop(['t','x','y','z','w','l','h',],axis=1)					#[r1,r2,r3,r4,vx,vy,vz,score,token]
-		info_df = info_df.loc[:,['vx','vy','vz','r1','r2','r3','r4','score','token']]
+		formatted_df = formatted_df.drop(['t','vx','vy','vz','score','token'],axis=1)		#[x,y,z,w,l,h,r1,r2,r3,r4]
+		info_df = info_df.drop(['x','y','z','w','l','h',],axis=1)							#[t,r1,r2,r3,r4,vx,vy,vz,score,token]
+		info_df = info_df.loc[:,['vx','vy','vz','r1','r2','r3','r4','score','token','t']]	#[vx,vy,vz,r1,r2,r3,r4,score,token,t]
 
 		theta_list = []
 		for i in formatted_df.index:
@@ -97,19 +98,19 @@ class AB3DMOT(object):
 			qz = formatted_df.iloc[i]['r4']
 			# quaternion = [qw,qx,qy,qz]
 			quaternion = Quaternion(qw,qx,qy,qz)
-
+			yaw_angle = quaternion.radians
 
 			# Project into xy plane.
-			v = np.dot(quaternion.rotation_matrix, np.array([1, 0, 0]))
+			# rot_mat = np.dot(quaternion.rotation_matrix, np.array([1, 0, 0]))
 
 		    # Measure yaw using arctan.
-			yaw_angle = np.arctan2(v[1], v[0])
+			# yaw_angle = np.arctan2(rot_mat[1], rot_mat[0])
 
-			# numerator = 2 * (qw*qx + qy*qz)
-			# denominator = 1 - 2*(qx*qx + qy*qy)
+			# numerator = 2 * (qx*qy + qw*qz)
+			# denominator = 1 - 2*(qy*qy + qz*qz)
 
 			# yaw_angle = np.arctan2(numerator, denominator)
-			
+
 			theta_list.append(yaw_angle) 
 
 
@@ -289,10 +290,11 @@ class AB3DMOT(object):
 		new_id_list = list()					# new ID generated for unmatched detections
 
 		for i in unmatched_dets:        			# a scalar of index
-			trk = KF(Box3D.bbox2array(dets[i]), info[i, :3], info[i, 3:], self.ID_count[0])
+			trk = KF(Box3D.bbox2array(dets[i]), info[i, :3], info[i, 3:], self.ID_count[0])	# x,y,z,theta,l,w,h | vx,vy,vz | r1,r2,r3,r4,score,token,t
 			self.trackers.append(trk)
 			new_id_list.append(trk.id)
 			# print('track ID %s has been initialized due to new detection' % trk.id)
+			print('birth of tracklet ',trk.id)
 			self.ID_count[0] += 1
 
 		return new_id_list
@@ -309,13 +311,13 @@ class AB3DMOT(object):
 			d = Box3D.bbox2array_raw(d)
 			vx,vy = trk.kf.x[7:9]
 			if ((trk.time_since_update < self.max_age) and (trk.hits >= self.min_hits or self.frame_count <= self.min_hits)):      
-				results.append(np.concatenate((d, vx, vy, [trk.id], trk.info)).reshape(1, -1)) 	#[h,w,l,x,y,z,theta,vx,vy,ID,quaternions,score,token]
+				results.append(np.concatenate((d, vx, vy, [trk.id], trk.info)).reshape(1, -1)) 	#[h,w,l,x,y,z,theta,vx,vy,ID,quaternions,score,token,t]
 			num_trks -= 1
 
 			# death, remove dead tracklet
 			if (trk.time_since_update >= self.max_age): 
 				self.trackers.pop(num_trks)
-				print('Death of tracklet',num_trks)
+				print('Death of tracklet',trk.id)
 
 		return results
 
@@ -403,10 +405,10 @@ class AB3DMOT(object):
 		"""
 		dets, info = self.format_dets_df(dets_all)
 		# dets - a dataframe of detections in the format ['x','y','z','w','l','h','theta']
-		# 		info: a array of other info for each det [vx,vy,vz,r1,r2,r3,r4,score,token]
+		# 		info: a array of other info for each det [vx,vy,vz,r1,r2,r3,r4,score,token,t]
 		
-		print('dets dataframe :')
-		print(dets)
+		# print('processed dets dataframe :')
+		# print(dets)
 
 
 		if self.debug_id: print('\nframe is %s' % frame_number)
@@ -444,18 +446,18 @@ class AB3DMOT(object):
 		matched, unmatched_dets, unmatched_trks, cost, affi = \
 			data_association(dets, trks, self.metric, self.thres, self.algm, trk_innovation_matrix)
 
-		print('detections are')
-		print(dets)
-		print('tracklets are')
-		print(trks)
+		# print('detections are')
+		# print(dets)
+		# print('tracklets are')
+		# print(trks)
 		print('matched indexes are')
 		print(matched)
 		print('unmatched indexes are')
 		print(unmatched_dets)
 		print('unmatched tracklets are')
 		print(unmatched_trks)
-		print('raw affinity matrix is')
-		print(affi)
+		# print('raw affinity matrix is')
+		# print(affi)
 
 		# input()
 
@@ -482,10 +484,10 @@ class AB3DMOT(object):
 		# 	# print_log(affi, log=self.log, display=False)
 
 		# logging
-		print('\ntop-1 cost selected')
-		print(cost)
-		for result_index in range(len(results)):
-			print(results[result_index][:, :8])
-			print('')
+		# print('\ntop-1 cost selected')
+		# print(cost)
+		# for result_index in range(len(results)):
+		# 	print(results[result_index][:, :8])
+		# 	print('')
 
 		return results, affi
