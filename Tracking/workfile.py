@@ -19,7 +19,7 @@ import cv2
 # load nuScenes libraries
 from nuscenes import NuScenes
 from nuscenes.utils.geometry_utils import transform_matrix
-from nuscenes.utils.data_classes import Box
+from nuscenes.utils.data_classes import Box, RadarPointCloud
 from nuscenes.utils.splits import create_splits_logs, create_splits_scenes
 
 # load AN3DMOT model
@@ -29,6 +29,7 @@ from my_libs.my_model import AB3DMOT
 # Utils
 ############################################################################################################################################################################
 
+sampling_freq = 12 
 
 # def get_sensor_param(nusc, sample_token, cam_name='CAM_FRONT'):
 
@@ -47,7 +48,7 @@ def mkdir_if_missing(path):
         os.mkdir(path)
         print("created directory at:",path)
 
-def load_nusc(split):
+def load_nusc(split,data_root):
     assert split in ['train','val','test'], "Bad nuScenes version"
 
     if split in ['train','val']:
@@ -202,7 +203,7 @@ def get_det_df(cat_detection_root,detection_method,cat,det_file,verbose=False):
                                 float(x),float(y),float(z),
                                 float(w),float(l),float(h),
                                 float(r1),float(r2),float(r3),float(r4),
-                                float(vx),float(vy),vz,
+                                float(vx)/sampling_freq,float(vy)/sampling_freq,vz, # compensating sampling frequency
                                 float(score),
                                 token])
 
@@ -220,12 +221,15 @@ def get_gt_at_t(cat,t,sample,sample_data,cs_record,ego_pose,det_df):
 
     _, nusc_box_list,_ = nusc.get_sample_data(sample_data_token = sample_data['token'])
 
-
     GT_list=[]
 
     for box in nusc_box_list:
         if (box.name).split('.')[1]==cat:
 
+            
+
+            # print(box)
+            
             #  Move box from sensor coord to ego.
             box.rotate(Quaternion(cs_record['rotation']))
             box.translate(np.array(cs_record['translation']))
@@ -233,6 +237,11 @@ def get_gt_at_t(cat,t,sample,sample_data,cs_record,ego_pose,det_df):
             # Move box from ego vehicle to global.
             box.rotate(Quaternion(ego_pose['rotation']))
             box.translate(np.array(ego_pose['translation']))
+            
+            gt_vel = tuple(nusc.box_velocity(box.token))
+            box.velocity = gt_vel
+
+            # print(box)
 
             # Extracting all values 
             t=t
@@ -240,36 +249,18 @@ def get_gt_at_t(cat,t,sample,sample_data,cs_record,ego_pose,det_df):
             w,l,h = box.wlh
             r1,r2,r3,r4 = box.orientation
             score = 1
-            token = sample['token']
-
-            closest_det_range = 50000                              
-
-            for i in range(len(det_df.index)):  # getting closest detection for velocity association
-                x_det = det_df.loc[i].loc['x']
-                y_det = det_df.loc[i].loc['y']
-                z_det = det_df.loc[i].loc['z']
-                
-                dist = math.sqrt((x_det-x)**2 + (y_det-y)**2 + (z_det-z)**2)
-
-                if dist<closest_det_range:
-                    closest_det_range=dist
-                    closest_det = det_df.loc[i]
-
-            if len(det_df.index)==0: # no det
-                vx = 0
-                vy = 0       
-
-            else :
-                vx = closest_det['vx']
-                vy = closest_det['vy']
+            token = box.token
+            vx,vy,vz = box.velocity
+            vz=0
             
-            vz = 0
+            # vz = 0                                
+
             
             GT_list.append([int(t),
                             float(x),float(y),float(z),
                             float(w),float(l),float(h),
                             float(r1),float(r2),float(r3),float(r4),
-                            float(vx/10),float(vy/10),vz,
+                            float(vx)/sampling_freq,float(vy)/sampling_freq,vz,
                             float(score),
                             token])
     
@@ -294,8 +285,20 @@ def random_colors(N, bright=True):
     # random.shuffle(colors)
     return colors
 
-def fixed_colors(N):
-    f = open('color_scheme.txt','w')     # rewritting file
+def fixed_colors():
+    f = open('color_scheme.txt')     # rewritting file
+    text = f.readlines()
+    color_name = []
+    color_val_txt = []
+    color_val = []
+    for item in text:
+        color_name.append(item.split(',')[0])
+        color_val_txt.append(item.split('(')[1].split(')')[0])
+    for color in color_val_txt:
+        color_tmp = (float(color.split(',')[0])/255,float(color.split(',')[1])/255,float(color.split(',')[2])/255,)
+        color_val.append(color_tmp)
+
+    return color_val
 
 
 ############################################################################################################################################################################
@@ -377,7 +380,7 @@ def initialize_tracker(data_root, cat, ID_start, nusc, det_file):
 
     return tracker, scene, first_sample_token
 
-def tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,score_thresh,nusc):
+def tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,score_thresh,nusc,log_viz):
     for cat in cat_list:        
 
         '''
@@ -469,13 +472,13 @@ def tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,scor
                 #     exit()
 
                 # exit()
-                detection_visualization(nusc=nusc,
-                                        data_root=data_root,
-                                        sample_data=sample_data,
-                                        det_df=det_df,
-                                        ego_pose=ego_pose,
-                                        token = sample_token,
-                                        cat=cat)
+                # detection_visualization(nusc=nusc,
+                #                         data_root=data_root,
+                #                         sample_data=sample_data,
+                #                         det_df=det_df,
+                #                         ego_pose=ego_pose,
+                #                         token = sample_token,
+                #                         cat=cat)
 
                 print('resume tracking :')
                 # input()
@@ -488,16 +491,17 @@ def tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,scor
                 print('\n',200*'-','\n')                
 
 
-                # tracking_visualization(nusc=nusc,
-                #                         data_root=data_root,
-                #                         sample_data=sample_data,
-                #                         results=results[0],
-                #                         cs_record=cs_record,
-                #                         cam_intrinsic=cam_intrinsic,
-                #                         ego_pose=ego_pose,
-                #                         det_df=det_df,
-                #                         score_thresh=score_thresh
-                #                         )   #det_df and score_thresh are for debugging purposes
+                tracking_visualization(nusc=nusc,
+                                        data_root=data_root,
+                                        sample_data=sample_data,
+                                        results=results[0],
+                                        cs_record=cs_record,
+                                        cam_intrinsic=cam_intrinsic,
+                                        ego_pose=ego_pose,
+                                        det_df=det_df,
+                                        score_thresh=score_thresh,
+                                        t=t
+                                        )   #det_df and score_thresh are for debugging purposes
 
                 sample_token = sample['next']   # last sample should be: ''                
 
@@ -506,25 +510,26 @@ def tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,scor
                 # if sample_number==4:
                 #     exit()
 
-def gt_tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,score_thresh,nusc):
+def gt_tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,score_thresh,nusc,log_viz):
     for cat in cat_list:        
 
         print("category: ",cat)
         det_file_list=get_scenes_list(os.path.join(cat_detection_root,detection_method+'_'+cat))
 
         for det_file in det_file_list:
-            if det_file == 'scene-0796.txt':
-                continue
+            # if det_file != 'scene-0103.txt':    # TO REMOVE / 4DEBUG
+            #     continue
 
-            tracker, scene, first_token = initialize_tracker(data_root=os.path.join(cat_detection_root,detection_method+'_'+cat),cat=cat, ID_start=0, nusc=nusc, det_file=det_file)
+            tracker, scene, first_token = initialize_tracker(data_root=os.path.join(cat_detection_root,detection_method+'_'+cat),cat=cat, 
+                                                            ID_start=0, nusc=nusc, det_file=det_file)
 
-            print ('initial trackers :',tracker.trackers)
+            # print ('initial trackers :',tracker.trackers)
             print ('scene :',scene['name'])
 
-            print(scene)
-            print()
+            # print(scene)
+            # print()
             
-            print('first sample :')
+            # print('first sample :')
 
             sample_token = first_token
 
@@ -540,56 +545,6 @@ def gt_tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,s
                 det_df = get_det_df_at_t(cat_detection_root,detection_method,cat,det_file,t)
                 gt_df = get_gt_at_t(cat,t,sample,sample_data,cs_record,ego_pose,det_df)
 
-                print(100*'#')
-                print('boxes :')
-                print(gt_df)
-                print(100*'-')               
-
-                # if t>0:
-
-                #     gt_df_tm1 = get_gt_at_t(cat,t-1,sample,sample_data,cs_record,ego_pose,det_df)
-                #     gt_df_t = gt_df
-
-                #     print('boxes at t-1:')
-                #     print(gt_df_tm1)
-                #     print(100*'-') 
-
-                #     closest_box = 30  # maximum movement                            
-                #     delta_t = 83 #m/s, from nuscenes doc
-
-                #     for i in range(len(gt_df_t.index)):
-                #         box_t = gt_df_t.loc[i]
-                #         for j in range(len(gt_df_tm1.index)):
-                #             box_tm1 = gt_df_tm1.loc[j]
-
-                #             x_t = box_t['x']
-                #             y_t = box_t['y']
-
-                #             x_tm1 = box_tm1['x']
-                #             y_tm1 = box_tm1['y']
-
-                            
-                #             dist = math.sqrt((x_t-x_tm1)**2 + (y_t-y_tm1)**2)
-
-                #             if dist<closest_box:
-                #                 closest_box=dist
-                #                 box_t['vx'] = (box_t['vx']-box_tm1['vx'])/delta_t
-                #                 box_t['vy'] = (box_t['vx']-box_tm1['vx'])/delta_t
-
-                #     print('new box at t=t:')
-                #     print(gt_df)
-                #     print(100*'-') 
-
-                print(200*'-','\n')
-                print('Sample: ',sample) 
-                print('\nSample data:',sample_data)
-                print('\n',200*'-','\n')
-
-                print('\n',200*'-','\n')
-                print('Ego pose:',ego_pose)
-                print('\nCalibrated Sensor record:',cs_record)
-                print('\nCam intrinsic:',cam_intrinsic)
-                print('\n',200*'-','\n')
 
                 if len(gt_df)>0:
                     print('\n',200*'-','\n')
@@ -608,37 +563,46 @@ def gt_tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,s
 
                 print('\n',200*'-','\n')
                 print ('tracking results:',results)
-                print ('affinity matrix:',affi)
+                # print ('affinity matrix:',affi)
                 print('\n',200*'-','\n')                
 
-
-                tracking_visualization(nusc=nusc,
-                                        data_root=data_root,
-                                        sample_data=sample_data,
-                                        results=results[0],
-                                        cs_record=cs_record,
-                                        cam_intrinsic=cam_intrinsic,
-                                        ego_pose=ego_pose,
-                                        det_df=gt_df,
-                                        score_thresh=score_thresh
-                                        )
+                if log_viz:
+                    log_tracking_visualization(nusc=nusc,
+                                                data_root=data_root,
+                                                sample_data=sample_data,
+                                                results=results[0],
+                                                cs_record=cs_record,
+                                                cam_intrinsic=cam_intrinsic,
+                                                ego_pose=ego_pose,
+                                                cat=cat,
+                                                scene_name=scene['name'],
+                                                t=t
+                                                )
+                else :
+                    tracking_visualization(nusc=nusc,
+                                            data_root=data_root,
+                                            sample_data=sample_data,
+                                            results=results[0],
+                                            cs_record=cs_record,
+                                            cam_intrinsic=cam_intrinsic,
+                                            ego_pose=ego_pose,
+                                            det_df=gt_df,
+                                            score_thresh=score_thresh,
+                                            t=t
+                                            )
 
                 sample_token = sample['next']   # last sample should be: ''                
 
 
+def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intrinsic,ego_pose,det_df,score_thresh,t):
 
-                # if t==4:
-                #     exit()
-
-def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intrinsic,ego_pose,det_df,score_thresh):
-
-    image_path = os.path.join(data_root,sample_data['filename'],)    
+    image_path = os.path.join(data_root,sample_data['filename'])    
     img = cv2.imread(image_path) 
 
 
-    max_color = 40
-    colors = random_colors(max_color)       # Generate random colors
-    # colors = fixed_colors(max_color)      # work in progress : having a color list to identify ID
+    max_color = 30
+    # colors = random_colors(max_color)       # Generate random colors
+    colors = fixed_colors()                   # Using pre-made color list to identify ID
 
     # img_data = Image.open(image_path)
     # read the image 
@@ -648,9 +612,10 @@ def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intr
     # cs_record = nusc.get('calibrated_sensor', sd_record['calibrated_sensor_token'])
     # imsize = (sd_record['width'], sd_record['height'])
 
+    # Tracking bboxes
     for res in results:
         # print(res)
-        h,w,l,x,y,z,theta,vx,vy,ID,r1,r2,r3,r4,score,token=res
+        h,w,l,x,y,z,theta,vx,vy,ID,r1,r2,r3,r4,score,token,t_res=res
         q = Quaternion(r1,r2,r3,r4)
 
         box = Box(center = [x,y,z],
@@ -669,19 +634,21 @@ def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intr
         box.translate(-np.array(cs_record['translation']))
         box.rotate(Quaternion(cs_record['rotation']).inverse)
         
-        color_float = colors[int(ID) % max_color]
+        color_float = colors[int(ID) % max_color]           # loops back to first color if more than max_color
         color_int = tuple([int(tmp * 255) for tmp in color_float])
         c = color_int
         # box.render(ax,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
 
-        if box.center[0]>0:
-            box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+        if t_res == t:  # Filtering out tracklets with no detection for that frame
+            if box.center[2]>0: # z value (front) cannot be < 0  
+                box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
         # print(box)
         # input()
 
     # ax.imshow(img_data)
     # plt.show()
 
+    # Detection bboxes
     for i in range(len(det_df)):
         det = det_df.loc[i]
         score = det['score']
@@ -723,7 +690,7 @@ def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intr
             box.translate(-np.array(cs_record['translation']))
             box.rotate(Quaternion(cs_record['rotation']).inverse)
             
-            print('xyz det :',box.center,' score:', box.score, 'velocity:', box.velocity, 'angle:', box.orientation.degrees)
+            # print('xyz det :',box.center,' score:', box.score, 'velocity:', box.velocity, 'angle:', box.orientation.degrees)
             c = (0,0,0)
             # box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
 
@@ -748,7 +715,7 @@ def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intr
     # exit()
 
 def detection_visualization (nusc,data_root,sample_data,det_df,ego_pose,token,cat):
-    image_path = os.path.join(data_root,sample_data['filename'],)
+    image_path = os.path.join(data_root,sample_data['filename'])
 
     # read the image 
     img = cv2.imread(image_path) 
@@ -809,7 +776,7 @@ def detection_visualization (nusc,data_root,sample_data,det_df,ego_pose,token,ca
             x = det['x']
             y = det['y']
             z = det['z'] 
-            z = 0.5
+            # z = 0.5
             r1 = det['r1']
             r2 = det['r2']
             r3 = det['r3']
@@ -859,19 +826,67 @@ def detection_visualization (nusc,data_root,sample_data,det_df,ego_pose,token,ca
                 cv2.destroyAllWindows()
     # exit()
 
+def log_tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intrinsic,ego_pose,scene_name,cat,t):
+    image_path = os.path.join(data_root,sample_data['filename'])    
+
+    img = cv2.imread(image_path) 
+
+    max_color = 30
+    colors = fixed_colors()
+
+    # Tracking bboxes
+    for res in results:
+        # print(res)
+        h,w,l,x,y,z,theta,vx,vy,ID,r1,r2,r3,r4,score,token,t_res=res
+        q = Quaternion(r1,r2,r3,r4)
+
+        box = Box(center = [x,y,z],
+                    size = [w,l,h],
+                    orientation = q,
+                    label = ID,
+                    score = score,
+                    velocity = [vx,vy,0],
+                    name = ID
+                    )
+        # Move box to ego vehicle coord system.
+        box.translate(-np.array(ego_pose['translation']))
+        box.rotate(Quaternion(ego_pose['rotation']).inverse)
+
+        #  Move box to sensor coord system.
+        box.translate(-np.array(cs_record['translation']))
+        box.rotate(Quaternion(cs_record['rotation']).inverse)
+        
+        # generating colors
+        color_float = colors[int(ID) % max_color]           # loops back to first color if more than max_color
+        color_int = tuple([int(tmp * 255) for tmp in color_float])
+        c = color_int
+
+        if t_res == t:  # Filtering out tracklets with no detection for that frame
+            if box.center[2]>0: # z value (front) cannot be < 0  
+                box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+    
+    mkdir_if_missing('results')
+    mkdir_if_missing(os.path.join('results',scene_name))
+
+    output_path = os.path.join('results',scene_name,cat)
+    mkdir_if_missing(output_path)
+    cv2.imwrite(os.path.join(output_path,sample_data['filename'].split('/')[-1]),img)
+
+
 if __name__ == '__main__':
 
     cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'construction_vehicle', 'motorcycle', 'trailer']
     data_root = './data/nuScenes'
     cat_detection_root = './data/cat_detection/'
-    detection_method = 'CRN'
-    sensor = 'CAM_FRONT'
-    split = 'train'
+    detection_method = 'CRN'  # pass as argument
+    sensor = 'CAM_FRONT'    # pass as argument
+    split = 'train'         # pass as argument
     score_thresh = 0.5
-    go_sep = False
-    gt_track = True
+    go_sep = False      # pass as argument
+    gt_track = True     # pass as argument
+    log_viz = True
     
-    nusc = load_nusc(split)
+    nusc = load_nusc(split,data_root)
 
     if go_sep == True : # (pass as arg later)
         separate_det_by_cat_and_samples(output_root=cat_detection_root,
@@ -892,7 +907,8 @@ if __name__ == '__main__':
                 detection_method=detection_method,
                 sensor=sensor,
                 score_thresh=score_thresh,
-                nusc=nusc
+                nusc=nusc,
+                log_viz=log_viz
                 )
     else:
         # Tracking using Ground truth detections
@@ -902,7 +918,8 @@ if __name__ == '__main__':
                     detection_method=detection_method,
                     sensor=sensor,
                     score_thresh=score_thresh,
-                    nusc=nusc
+                    nusc=nusc,
+                    log_viz=log_viz
                     )
 
 
