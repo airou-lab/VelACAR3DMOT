@@ -104,9 +104,13 @@ class Box3D:
         l, w, h = bbox.l, bbox.w, bbox.h
 
         # 3d bounding box corners
-        x_corners = [l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2];
-        y_corners = [0,0,0,0,-h,-h,-h,-h];
-        z_corners = [w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2];
+        # x_corners = [l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2];
+        # y_corners = [0,0,0,0,-h,-h,-h,-h];
+        # z_corners = [w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2];
+
+        x_corners = l / 2 * np.array([1,  1,  1,  1, -1, -1, -1, -1])
+        y_corners = w / 2 * np.array([1, -1, -1,  1,  1, -1, -1,  1])
+        z_corners = h / 2 * np.array([1,  1, -1, -1,  1,  1, -1, -1])
 
 
         '''
