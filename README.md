@@ -226,7 +226,7 @@ ExtendedCRN
 Now, set the ```go_sep``` value in workfile.py back to ```False```.<br>
 In workfile.py main function: <br>
 - To use the ground truth instead of CRN's detection, set ```gt_track``` to ```True```
-- To visualize the output of the tracking for each frame as it is done, set ```log_viz``` to ``False```. If set to ```True```, the output will be directly saved in a 'results' folder under the 'Tracking' directory.
+- To visualize the output of the tracking for each frame as it is done, set ```log_viz``` to ```False```. If set to ```True```, the output will be directly saved in a 'results' folder under the 'Tracking' directory.
 
 p.s : as of now, the ground truth tracking still needs the detections folders to work.
 
