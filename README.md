@@ -197,15 +197,32 @@ ExtendedCRN
 
 #### (# This is a provisional description that will be changed as the project evolves and gets cleaner once everything works)
 
-AB3DMOT requires the detection data to be separated in different files by object class.
-
+AB3DMOT requires the detection data to be separated in different files by object class.<br>
 To begin with, you need to set the ```go_sep``` value in workfile.py to ```True```.<br>
 Once this is done, run workfile.py :
 ```
-
+python workfile.py
 ```
-
-
+This should generate a folder named 'cat_detection'. Inside this folder should be one folder per category, inside which you should find one .txt file per scene.<br>
+Those text files contain the detections for this scenes+category, with a integer indice indicating the frame from the scene.<br>
+Your Tracking data folder should now look like this :
+```
+ExtendedCRN
+├──Tracking
+|   ├── data
+|   │   ├── nuScenes (link)
+|   │   ├── detection-output (link)
+|   │   ├── cat_detection
+│   |   │   ├── CRN_bicycle
+│   |   │   ├── CRN_bus
+│   |   │   ├── CRN_car
+|   │   |   │   ├── scene-0103.txt
+|   │   |   │   ├── scene-0553.txt
+|   │   |   │   ├── scene-0796.txt
+|   │   |   │   ├── scene-0916.txt
+│   |   │   ├── ...
+│   |   │   ├── CRN_truck
+```
 
 
 
