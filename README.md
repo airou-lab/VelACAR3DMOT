@@ -197,7 +197,14 @@ ExtendedCRN
 
 #### (# This is a provisional description that will be changed as the project evolves and gets cleaner once everything works)
 
+AB3DMOT requires the detection data to be separated in different files by object class.
 
+To begin with, you need to set the ```go_sep``` value in workfile.py to ```True```.\n
+
+Once this is done, run workfile.py :
+```
+
+```
 
 
 
