@@ -172,7 +172,7 @@ mkdir data
 ln -s ../../data/nuScenes ./data/
 ln -s ../../Detection/detection_output ./data/
 ```
-Your data folder in the Tracking folder should look like this : 
+Your data folder in the Tracking folder should look like this within the project structure: 
 ```
 ExtendedCRN
 ├──Tracking
@@ -195,7 +195,8 @@ ExtendedCRN
 ```
 ### Data formatting
 
-(#TODO)
+#### (# This is a provisional description that will be changed as the project evolves and gets cleaner once everything works)
+
 
 
 
