@@ -195,7 +195,11 @@ ExtendedCRN
 ```
 ### Data formatting
 
-#### (# This is a provisional description that will be changed as the project evolves and gets cleaner once everything works)
+#### (This is a provisional description that will be changed as the project evolves and gets cleaner once everything works)
+
+*N.B: As of now, the ground truth tracking still needs the detections folders to work. Because of this, you'll find the detection folder for the cars and pedestrian in the git project in case you do not want to run CRN. This should allow it to work, but you should change the cat_list list to ```['car', 'pedestrian']```.*
+
+___
 
 AB3DMOT requires the detection data to be separated in different files by object class.<br>
 To begin with, you need to set the ```go_sep``` value in workfile.py to ```True```.<br>
@@ -228,5 +232,4 @@ In workfile.py main function: <br>
 - To use the ground truth instead of CRN's detection, set ```gt_track``` to ```True```
 - To visualize the output of the tracking for each frame as it is done, set ```log_viz``` to ```False```. If set to ```True```, the output will be directly saved in a 'results' folder under the 'Tracking' directory.
 
-p.s : as of now, the ground truth tracking still needs the detections folders to work.
 
