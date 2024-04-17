@@ -15,8 +15,10 @@ def compute_affinity(dets, trks, metric, trk_inv_inn_matrices=None):
 			# elif metric == 'm_dis':   dist_now = -m_distance(det, trk, trk_inv_inn_matrices[t])
 			# elif metric == 'euler':   dist_now = -m_distance(det, trk, None)
 			# elif metric == 'dist_2d': dist_now = -dist_ground(det, trk)              	
-			# elif metric == 'dist_3d': dist_now = -dist3d(det, trk)              				
-			else: assert False, 'error'
+			elif metric == 'dist_3d': dist_now = -dist3d(det, trk)              				
+			else:
+				print('metric:', metric) 
+				assert False, 'metric type unrecognized'
 			aff_matrix[d, t] = dist_now
 
 	return aff_matrix

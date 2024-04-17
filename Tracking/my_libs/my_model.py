@@ -39,14 +39,14 @@ class AB3DMOT(object):
 		self.print_param()
 
 		# debug
-		# self.debug_id = 2
 		self.debug_id = None
+		# self.debug_id = 7
 
 	def get_param(self, cat):
 		# get parameters for each dataset
 
-		if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-		elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
+		if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_2d', -0.4, 1, 2
+		elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_2d', -0.5, 1, 2
 		elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
 		elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
 		elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
@@ -256,6 +256,14 @@ class AB3DMOT(object):
 				vel = info[d, :3]
 				trk.kf.x[3], bbox3d[3] = self.orientation_correction(trk.kf.x[3], bbox3d[3])
 
+				# if d[0] == 0 and t==0:
+				# 	print(d)
+				# 	print(t)
+				# 	print(trk.kf.x)
+				# 	print('ID :',trk.id)
+				# 	print('debug:', self.debug_id)
+				# 	print(trk.id == self.debug_id)
+
 				if trk.id == self.debug_id:
 					print('After ego-compensation')
 					print(trk.kf.x.reshape((-1)))
@@ -456,8 +464,8 @@ class AB3DMOT(object):
 		print(unmatched_dets)
 		print('unmatched tracklets are')
 		print(unmatched_trks)
-		# print('raw affinity matrix is')
-		# print(affi)
+		print('raw affinity matrix is')
+		print(affi)
 
 		# input()
 

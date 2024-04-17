@@ -1,7 +1,6 @@
 import numpy as np
 from numba import jit
 from copy import deepcopy
-# from .kitti_oxts import roty
 
 class Box3D:
     def __init__(self, x=None, y=None, z=None, h=None, w=None, l=None, ry=None, s=None):
@@ -60,6 +59,15 @@ class Box3D:
         return bbox
     
     @staticmethod
+    def rotx(t):
+        """Rotation about the y-axis."""
+        c = np.cos(t)
+        s = np.sin(t)
+        return np.array([[1,  0,  0],
+                         [0,  c,  -s],
+                         [0,  s,  c]])
+
+    @staticmethod
     def roty(t):
         """Rotation about the y-axis."""
         c = np.cos(t)
@@ -68,9 +76,18 @@ class Box3D:
                          [0,  1,  0],
                          [-s, 0,  c]])
 
+    @staticmethod
+    def rotz(t):
+        """Rotation about the y-axis."""
+        c = np.cos(t)
+        s = np.sin(t)
+        return np.array([[c, -s,  0],
+                         [s,  c,  0],
+                         [0,  0,  1]])
+
     @classmethod
     def box2corners3d_camcoord(cls, bbox):
-        ''' Takes an object's 3D box with the representation of [x,y,z,theta,l,w,h] and 
+        ''' Takes an object's 3D box with the representation of [x,y,z,theta,l,w,h] and                 #TODO : rectify for nuscene conventions
             convert it to the 8 corners of the 3D box, the box is in the camera coordinate
             with right x, down y, front z
             
@@ -98,7 +115,7 @@ class Box3D:
 
         # compute rotational matrix around yaw axis
         # -1.57 means straight, so there is a rotation here
-        R = Box3D.roty(bbox.ry)  
+        R = Box3D.rotz(bbox.ry)  
 
         # 3d bounding box dimensions
         l, w, h = bbox.l, bbox.w, bbox.h
