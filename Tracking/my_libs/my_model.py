@@ -45,8 +45,8 @@ class AB3DMOT(object):
 	def get_param(self, cat):
 		# get parameters for each dataset
 
-		if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_2d', -0.4, 1, 2
-		elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_2d', -0.5, 1, 2
+		if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+		elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
 		elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
 		elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
 		elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2

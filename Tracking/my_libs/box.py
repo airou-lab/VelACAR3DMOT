@@ -89,24 +89,24 @@ class Box3D:
     def box2corners3d_camcoord(cls, bbox):
         ''' Takes an object's 3D box with the representation of [x,y,z,theta,l,w,h] and                 #TODO : rectify for nuscene conventions
             convert it to the 8 corners of the 3D box, the box is in the camera coordinate
-            with right x, down y, front z
+            with front x, left y, up z
             
             Returns:
                 corners_3d: (8,3) array in in rect camera coord
 
             box corner order is like follows
-                    1 -------- 0         top is bottom because y direction is negative
+                    4 -------- 5         right is left because y direction is negative
                    /|         /|
-                  2 -------- 3 .
+                  0 -------- 1 .
                   | |        | |
-                  . 5 -------- 4
+                  . 7 -------- 6
                   |/         |/
-                  6 -------- 7    
+                  3 -------- 2    
             
             rect/ref camera coord:
-            right x, down y, front z
+            front x, left y, up z
 
-            x -> w, z -> l, y -> h
+            x -> l, y -> w, z -> h,
         '''
 
         # if already computed before, then skip it

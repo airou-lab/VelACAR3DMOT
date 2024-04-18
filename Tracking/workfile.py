@@ -518,8 +518,8 @@ def gt_tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,s
 
         for det_file in det_file_list:
         
-            if det_file != 'scene-0916.txt':    # DEBUG
-                continue
+            # if det_file != 'scene-0916.txt':    # DEBUG
+                # continue
 
             tracker, scene, first_token = initialize_tracker(data_root=os.path.join(cat_detection_root,detection_method+'_'+cat),cat=cat, 
                                                             ID_start=0, nusc=nusc, det_file=det_file)
@@ -901,8 +901,8 @@ def log_tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_
 if __name__ == '__main__':
 
     # cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'construction_vehicle', 'motorcycle', 'trailer']
-    # cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']
-    cat_list = ['car']
+    cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']
+    # cat_list = ['pedestrian']
     data_root = './data/nuScenes'
     cat_detection_root = './data/cat_detection/'
     detection_method = 'CRN'  # pass as argument
