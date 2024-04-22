@@ -518,8 +518,8 @@ def gt_tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,s
 
         for det_file in det_file_list:
         
-            # if det_file != 'scene-0916.txt':    # DEBUG
-                # continue
+            if det_file != 'scene-0103.txt':    # DEBUG
+                continue
 
             tracker, scene, first_token = initialize_tracker(data_root=os.path.join(cat_detection_root,detection_method+'_'+cat),cat=cat, 
                                                             ID_start=0, nusc=nusc, det_file=det_file)
@@ -537,12 +537,12 @@ def gt_tracking (cat_list,data_root,cat_detection_root,detection_method,sensor,s
 
                 print ('t = ',t)
 
-                # if t<100:                 # DEBUG
-                #     #GOTO next sample
-                #     sample_token = sample_data['next']
-                #     sample_data = nusc.get('sample_data', sample_token)
-                #     t+=1
-                #     continue
+                if t<95:                 # DEBUG
+                    #GOTO next sample
+                    sample_token = sample_data['next']
+                    sample_data = nusc.get('sample_data', sample_token)
+                    t+=1
+                    continue
 
                 print(200*'*','\n')
                 print('Sample: ',sample) 
@@ -664,11 +664,13 @@ def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intr
         c = color_int
         # box.render(ax,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
 
-        if t_res == t:  # Filtering out tracklets with no detection for that frame
-            if box.center[2]>0: # z value (front) cannot be < 0  
-                box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+        # if t_res == t:  # Filtering out tracklets with no detection for that frame
+        #     if box.center[2]>0: # z value (front) cannot be < 0  
+        #         box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
         # print(box)
         # input()
+        if box.center[2]>0: # z value (front) cannot be < 0  
+            box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
 
     # ax.imshow(img_data)
     # plt.show()
@@ -717,7 +719,7 @@ def tracking_visualization(nusc,data_root,sample_data,results,cs_record,cam_intr
             
             # print('xyz det :',box.center,' score:', box.score, 'velocity:', box.velocity, 'angle:', box.orientation.degrees)
             c = (0,0,0)
-            box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+            # box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
 
             # exit()
 

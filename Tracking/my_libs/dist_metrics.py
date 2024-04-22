@@ -77,20 +77,23 @@ def compute_height(box_a, box_b, inter=True):
 	corners1 = Box3D.box2corners3d_camcoord(box_a) 	# 8 x 3
 	corners2 = Box3D.box2corners3d_camcoord(box_b)	# 8 x 3
 
-	# print('\ncorners1:',corners1)
-	# print('\nzmax:',corners1[5, 2],corners2[5, 2])
-	# print('\nzmin:',corners1[6, 2],corners2[6, 2])
-	# input()
-
-
 	if inter: 		# compute overlap height
 		zmax = min(corners1[5, 2], corners2[5, 2])
 		zmin = max(corners1[6, 2], corners2[6, 2])
 		height = max(0.0, zmax - zmin)
 	else:			# compute union height
-		zmax = max(corners1[5, 1], corners2[5, 1])
-		zmin = min(corners1[6, 1], corners2[6, 1])
+		zmax = max(corners1[5, 2], corners2[5, 2])
+		zmin = min(corners1[6, 2], corners2[6, 2])
 		height = max(0.0, zmax - zmin)
+
+		# print('\ncorners1:',corners1)
+		# print('\nzmax:',corners1[5, 2],corners2[5, 2])
+		# print('\nzmin:',corners1[6, 2],corners2[6, 2])
+		# print(zmax,zmin,zmax-zmin)
+		# input()
+	# if height == 0:
+	# 	print(zmax, zmin)
+	# 	input()
 
 	return height
 
@@ -168,15 +171,20 @@ def iou(box_a, box_b, metric='giou_3d'):
 
 	elif '3d' in metric:		# return 3D IoU/GIoU
 		overlap_height = compute_height(box_a, box_b)
-		print()
-		print(overlap_height)
-		print()
+		# print()
+		# print(overlap_height)
+		# print()
 		I_3D = I_2D * overlap_height	
 		U_3D = box_a.w * box_a.l * box_a.h + box_b.w * box_b.l * box_b.h - I_3D
 		if metric == 'iou_3d':  return I_3D / U_3D
 		if metric == 'giou_3d':
 			union_height = compute_height(box_a, box_b, inter=False)
 			C_3D = C_2D * union_height
+
+			if C_3D ==0:
+				print(C_2D,union_height)
+				input()
+
 			return I_3D / U_3D - (C_3D - U_3D) / C_3D
 	else:
 		assert False, '%s is not supported' % space
