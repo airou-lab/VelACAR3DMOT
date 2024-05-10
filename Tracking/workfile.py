@@ -321,9 +321,72 @@ def fixed_colors():
     return color_val
 
 
-def compute_metrics(results_df):
-    return 0
+def log_results(results_df,cat,scene):
+    mkdir_if_missing('results_log')
+    mkdir_if_missing(os.path.join('results_log',scene['name']))
 
+    # resetting panda index 
+    results_df=results_df.reset_index(drop=True)
+    results_df.to_pickle(os.path.join('results_log',scene['name'],cat+'.pkl'))
+
+def concat_results_and_eval(args,output_dir,cat_list,nusc):
+
+
+    meta_dict = {"use_camera": True,
+        "use_lidar": False,
+        "use_radar": True,
+        "use_map": False, 
+        "use_external": False, 
+        }
+
+    results_dict = dict()
+    
+    scenes_list = os.listdir(output_dir)
+    print(scenes_list)
+
+    for scene in scenes_list:
+        scene_df = pd.DataFrame(columns =['w','l','h','x','y','z','vx','vy','ID','r1','r2','r3','r4','score','token','object'])
+
+        for cat in cat_list:
+            df_tmp = pd.read_pickle(os.path.join(output_dir,scene,cat+'.pkl'))
+            df_tmp = df_tmp.drop(['theta','t'],axis=1)
+            df_tmp.loc[:,'object']=cat
+            
+            scene_df = pd.concat([scene_df,df_tmp])
+
+        scene_df = scene_df.reset_index(drop=True)
+        print(scene_df)
+
+        token_list = scene_df['token'].drop_duplicates().tolist()
+
+        sample_result_list = []
+
+        for token in token_list:
+            df_by_token = scene_df.loc[scene_df['token']==token]
+            
+            for i in range(len(df_by_token)):
+                sample_df = df_by_token.iloc[i]
+
+                sample_result={'sample_token':token,
+                                'translation': [sample_df['x'],sample_df['y'],sample_df['z']],
+                                'size': [sample_df['w'],sample_df['l'],sample_df['h']],
+                                'rotation': [sample_df['r1'],sample_df['r2'],sample_df['r3'],sample_df['r4']],
+                                'velocity': [sample_df['vx'],sample_df['vy']],
+                                'tracking_id': sample_df['ID'],
+                                'tracking_name': sample_df['object'],
+                                'tracking_score':sample_df['score']
+                        }
+
+                sample_result_list.append(sample_result)
+            
+            results_dict[token] = sample_result_list
+
+    output_dict={'submission':meta_dict, 'results':results_dict}
+
+    with open("track_results_nusc.json", "w") as file: 
+        json.dump(output_dict, file)
+
+    return 0
 
 ############################################################################################################################################################################
 # Pipeline
@@ -363,7 +426,7 @@ def separate_det_by_cat_and_scene(args,detection_file,cat_list,nusc):
 
                 while True:
 
-                    if nusc_data['sample_token'] in det_data['results']:
+                    if nusc_data['token'] in det_data['results']:
                         
                         # opening file (r/w)
                         if scene['name'] not in scene_mem:
@@ -376,7 +439,7 @@ def separate_det_by_cat_and_scene(args,detection_file,cat_list,nusc):
 
                         # Logging detections
                         det_cnt = 0
-                        sample_token = nusc_data['sample_token']
+                        sample_token = nusc_data['token']
                         for det_sample in det_data['results'][sample_token]:
 
                             if det_sample['detection_name']==cat and det_sample['detection_score']>=args.score_thresh:
@@ -434,12 +497,13 @@ def tracking(args,cat_list,nusc):
 
         print("category: ",cat)
         det_file_list=get_scenes_list(os.path.join(args.cat_detection_root,args.detection_method+'_'+cat))
-        results_df = pd.DataFrame(columns =['w','l','h','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
 
         for det_file in det_file_list:
         
             # if det_file != 'scene-0103.txt':    # DEBUG
                 # continue
+
+            results_df = pd.DataFrame(columns =['w','l','h','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])    # full results for this scene
 
             tracker, scene, first_token = initialize_tracker(data_root=os.path.join(args.cat_detection_root,args.detection_method+'_'+cat),cat=cat, 
                                                             ID_start=0, nusc=nusc, det_file=det_file)
@@ -465,7 +529,7 @@ def tracking(args,cat_list,nusc):
                 #     continue
 
                 print(200*'*','\n')
-                print('Sample: ',sample) 
+                # print('Sample: ',sample) 
                 print('\nSample data:',sample_data)
                 print('\n',200*'-','\n')
 
@@ -516,8 +580,8 @@ def tracking(args,cat_list,nusc):
 
                 # logging results for metrics
                 results_df_at_t['t']=t
-                results_df=results_df.append(results_df_at_t)
-                print(100*'$')
+                results_df=pd.concat([results_df,results_df_at_t])
+                # print(100*'$')
                 print(results_df)
 
 
@@ -550,13 +614,15 @@ def tracking(args,cat_list,nusc):
                 if sample_data['next'] == "":
                     #GOTO next scene
                     print("no next data")
-                    compute_metrics(results_df)
                     break
                 else:
                     #GOTO next sample
                     sample_token = sample_data['next']
                     sample_data = nusc.get('sample_data', sample_token)
                     t+=1
+
+            # Logging results for this scene
+            log_results(results_df,cat,scene)    
 
 def gt_tracking(args,cat_list,nusc):
     for cat in cat_list:        
@@ -962,8 +1028,9 @@ def create_parser():
     parser.add_argument('--score_thresh', type=float, default=0.5, help='minimum detection confidence')
     parser.add_argument('--go_sep', action='store_true', default=False, help='separate detections by category (required once)')
     parser.add_argument('--gt_track', action='store_true', default=False, help='tracking using ground thruth instead of detections (debug)')
-    parser.add_argument('--log_viz', action='store_true', default=False, help='Logging tracking visualization directly instead of displaying')
+    parser.add_argument('--log_viz', action='store_true', default=False, help='Logging tracking visualization (saving .png files) directly instead of displaying')
     parser.add_argument('--viz', action='store_true', default=False, help='display tracking visualization (superseeded by log_viz)')
+    parser.add_argument('--do_eval', action='store_true', default=False, help='Concatenate results and run evaluation metrics')
 
     return parser
 
@@ -980,14 +1047,24 @@ if __name__ == '__main__':
     
     nusc = load_nusc(args.split,args.data_root)
 
-    if args.go_sep == True : # (pass as arg later)
+    # Separation of all detections by their categories and scenes (required first step)
+    if args.go_sep == True :
         separate_det_by_cat_and_scene(args,
                                     detection_file = './data/detection_output/results_nusc.json',
                                     cat_list=cat_list,
                                     nusc=nusc
                                     )
 
+    # Running evaluation on tracking data (needs to be generated first)
+    if args.do_eval:
+        concat_results_and_eval(args,
+                                output_dir='./results_log',
+                                cat_list=cat_list,
+                                nusc=nusc
+                                )
 
+
+    # Tracking pipeline, with custom deteciton or with ground truth for debugging purposes
     if args.gt_track == False :
         # Tracking using CNN detections
         tracking(args,
@@ -1000,9 +1077,3 @@ if __name__ == '__main__':
                     cat_list=cat_list,
                     nusc=nusc
                     )
-
-
-'''
-#TODO : 
-- Metrics
-'''
