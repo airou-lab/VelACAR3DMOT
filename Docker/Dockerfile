@@ -44,6 +44,7 @@ RUN mim install mmdet==2.25.2
 
 # Tracking libs
 RUN pip install filterpy==1.4.5
+RUN pip install motmetrics==1.1.3
 
 # Moving to /ws (workspace) directory
 WORKDIR /home/ws
