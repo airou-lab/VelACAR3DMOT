@@ -202,10 +202,9 @@ ExtendedCRN
 ___
 
 AB3DMOT requires the detection data to be separated in different files by object class.<br>
-To begin with, you need to set the ```go_sep``` value in workfile.py to ```True```.<br>
-Once this is done, run workfile.py :
+To do this, run:
 ```
-python workfile.py
+python workfile.py --go_sep
 ```
 This should generate a folder named 'cat_detection'. Inside this folder should be one folder per category, inside which you should find one .txt file per scene.<br>
 Those text files contain the detections for this scenes+category, with a integer indice indicating the frame from the scene.<br>
@@ -227,9 +226,22 @@ ExtendedCRN
 │   |   │   ├── ...
 │   |   │   ├── CRN_truck
 ```
-Now, set the ```go_sep``` value in workfile.py back to ```False```.<br>
-In workfile.py main function: <br>
-- To use the ground truth instead of CRN's detection, set ```gt_track``` to ```True```
-- To visualize the output of the tracking for each frame as it is done, set ```log_viz``` to ```False```. If set to ```True```, the output will be directly saved in a 'results' folder under the 'Tracking' directory.
+You can now run the Tracking in different configurations:<br>
+- ```python  workfile.py --viz``` will display each frame and add the tracked object bounding boxes. The tracking is done category by category.<br>
+- ```python  workfile.py --log_viz``` will save each aforementionned frame in .png files in a folder for each category, all under a 'results' folder.<br>
+- ```python  workfile.py --gt_track``` will display each frame and add the tracking bounding box, using the ground truth as detection backbone. This is used for debugging purposes.<br>
 
+To generate the nuScenes-formatted results, run:
+```
+python workfile.py
+```
+Finally, to evaluate the output using nuScenes official evauation:
+```
+# Create a json output file nammed : 'track_results_nusc.json' in the Tracking directory, containing all the detections.
+python workfile.py --concat	
+
+# Display metrics and log them into a 'track_output' directory.
+python evaluate.py --result_path track_results_nusc.json --output_dir ./track_output --eval_set train --dataroot ./data/nuScenes 
+
+```
 
