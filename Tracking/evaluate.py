@@ -17,8 +17,8 @@ from nuscenes.eval.common.loaders import (
     load_gt,
     load_prediction,
 )
-# from nuscenes.eval.tracking.algo import TrackingEvaluation
-from my_libs.my_nusc_libs.algo import TrackingEvaluation
+from nuscenes.eval.tracking.algo import TrackingEvaluation
+# from my_libs.my_nusc_libs.algo import TrackingEvaluation
 from nuscenes.eval.tracking.constants import AVG_METRIC_MAP, MOT_METRIC_MAP, LEGACY_METRICS
 from nuscenes.eval.tracking.data_classes import TrackingMetrics, TrackingMetricDataList, TrackingConfig, TrackingBox, \
     TrackingMetricData
@@ -92,6 +92,14 @@ class TrackingEval:
             self.result_path, self.cfg.max_boxes_per_sample, TrackingBox, verbose=verbose
         )
         gt_boxes = load_gt(nusc, self.eval_set, TrackingBox, verbose=verbose)
+
+        print(set(pred_boxes.sample_tokens))
+        print(len(set(pred_boxes.sample_tokens)))
+
+        print()
+
+        print(set(gt_boxes.sample_tokens))
+        print(len(set(gt_boxes.sample_tokens)))
 
         assert set(pred_boxes.sample_tokens) == set(gt_boxes.sample_tokens), \
             "Samples in split don't match samples in predicted tracks."
@@ -284,7 +292,6 @@ if __name__ == "__main__":
 '''
 Run with :
 
-python evaluate.py --result_path track_results_nusc.json --output_dir ./track_output --eval_set train --dataroot ./data/nuScenes 
-
+python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ --eval_set val --dataroot ./data/nuScenes 
 
 '''
