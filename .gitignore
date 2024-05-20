@@ -12,13 +12,26 @@ Detection/build/
 Detection/outputs/
 Detection/detection_output/
 
+Detection/pretty_printed_results_nusc.txt
+Detection/*.json
+
 # Tracking generated folders
 Tracking/data
 Tracking/Xinshuo_PyToolbox
-Tracking/AAB3DMOT_libs
+Tracking/AB3DMOT_libs
 Tracking/configs
 Tracking/docs
 Tracking/external
 Tracking/scripts
+Tracking/output/*bckp
+Tracking/output/*/plots
+Tracking/output/*/metrics_details.json
+Tracking/output/*/track_results_nusc.json
+
 Tracking/*.gif
+Tracking/*.json
 Tracking/results
+Tracking/radiant_visualizer.py
+Tracking/visualizer.py
+Tracking/main.py
+Tracking/track_results_pretty_print.txt
