@@ -39,8 +39,8 @@ class AB3DMOT(object):
 		self.print_param()
 
 		# debug
-		self.debug_id = None
-		# self.debug_id = 7
+		# self.debug_id = None
+		self.debug_id = 0
 
 	def get_param(self, cat):
 		# get parameters for each dataset
@@ -255,14 +255,6 @@ class AB3DMOT(object):
 				bbox3d = Box3D.bbox2array(dets[d[0]])
 				vel = info[d, :3]
 				trk.kf.x[3], bbox3d[3] = self.orientation_correction(trk.kf.x[3], bbox3d[3])
-
-				# if d[0] == 0 and t==0:
-				# 	print(d)
-				# 	print(t)
-				# 	print(trk.kf.x)
-				# 	print('ID :',trk.id)
-				# 	print('debug:', self.debug_id)
-				# 	print(trk.id == self.debug_id)
 
 				if trk.id == self.debug_id:
 					print('After ego-compensation')
