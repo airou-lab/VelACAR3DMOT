@@ -237,11 +237,18 @@ python workfile.py
 ```
 Finally, to evaluate the output using nuScenes official evauation:
 ```
-# Create a json output file nammed : 'track_results_nusc.json' in the Tracking directory, containing all the detections.
+# Create a json output file nammed : 'track_results_nusc.json' in the Tracking/output/track_output_CRN/ directory, containing all the detections and formatted for evaluation.
 python workfile.py --concat	
 
 # Display metrics and log them into a 'track_output' directory.
-python evaluate.py --result_path track_results_nusc.json --output_dir ./track_output --eval_set train --dataroot ./data/nuScenes 
-
+python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ --eval_set val --dataroot ./data/nuScenes 
 ```
+
+Alternatively, you can use the shell script launcher to run the whole tracking pipeline, including the separation, concatenation, and evaluation:
+```
+bash launch.sh
+```
+
+
+
 
