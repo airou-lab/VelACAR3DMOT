@@ -112,7 +112,7 @@ python [EXP_PATH] --ckpt_path [CKPT_PATH] -e -b 4 --gpus 4
 ```
 *Example using R50* 
 ```
-python exps/det/CRN_r50_256x704_128x128_4key.py --ckpt_path checkpoint/CRN_r50_256x704_128x128_4key.pth -e -b 4 --gpus 1
+python exps/det/CRN_r50_256x704_128x128_4key.py --ckpt_path checkpoint/CRN_r50_256x704_128x128_4key.pth -e -b 1 --gpus 1
 ```
 
 ### Model Zoo
