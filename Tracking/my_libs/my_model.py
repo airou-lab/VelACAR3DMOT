@@ -13,7 +13,7 @@ from my_libs.kalman_filter import KF
 
 # A Baseline of 3D Multi-Object Tracking
 class AB3DMOT(object):			  	
-	def __init__(self, cat, calib=None, oxts=None, img_dir=None, vis_dir=None, hw=None, log=None, ID_init=0):                    
+	def __init__(self, args, cat, calib=None, oxts=None, img_dir=None, vis_dir=None, hw=None, log=None, ID_init=0):                    
 
 		# vis and log purposes
 		self.img_dir = img_dir
@@ -34,25 +34,50 @@ class AB3DMOT(object):
 		# self.ego_com = cfg.ego_com 			# ego motion compensation
 		self.calib = calib
 		self.oxts = oxts
-		# self.affi_process = cfg.affi_pro	# post-processing affinity
+		self.affi_process = args.affi_pro	# post-processing affinity
+		self.det_name = args.detection_method
+
+
 		self.get_param(cat)
 		self.print_param()
 
 		# debug
-		# self.debug_id = None
-		self.debug_id = 0
+		self.debug_id = None
+		# self.debug_id = 1
 
 	def get_param(self, cat):
-		# get parameters for each dataset
 
-		if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-		elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
-		elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-		elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
-		elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-		elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.7, 3, 2
-		elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
-		else: assert False, 'cat name error: %s'%(cat)
+		if self.det_name == 'CRN':
+			if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
+			elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
+			elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.7, 3, 2
+			elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
+			else: assert False, 'cat name error: %s'%(cat)
+		
+		elif self.det_name == 'Radiant':
+			if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
+			elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
+			elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.7, 3, 2
+			elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
+			else: assert False, 'cat name error: %s'%(cat)
+		
+		elif self.det_name == 'GT':
+			if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
+			elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
+			elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+			elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.7, 3, 2
+			elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
+			else: assert False, 'cat name error: %s'%(cat)
+
+		else: assert False, 'Error : Unknown detector %s'%(self.det_name)
 
 		# add negative due to it is the cost
 		if metric in ['dist_3d', 'dist_2d', 'm_dis']: thres *= -1	
@@ -122,7 +147,7 @@ class AB3DMOT(object):
 	def process_dets(self, dets_df):
 		# convert each detection into the class Box3D 
 		# inputs: 
-		# 	dets_df - a pandas datafrane of detections in the format [x,y,z,w,l,h,theta]
+		# 	dets_df - a pandas dataframe of detections in the format [x,y,z,w,l,h,theta]
 
 		dets = dets_df.to_numpy()	# convert df to numpy
 		dets_new = []
@@ -159,61 +184,8 @@ class AB3DMOT(object):
 
 		return theta_pre, theta_obs
 
-	def ego_motion_compensation(self, frame, trks):
-		# inverse ego motion compensation, move trks from the last frame of coordinate to the current frame for matching
-		
-		from AB3DMOT_libs.kitti_oxts import get_ego_traj, egomotion_compensation_ID
-		assert len(self.trackers) == len(trks), 'error'
-		ego_xyz_imu, ego_rot_imu, left, right = get_ego_traj(self.oxts, frame, 1, 1, only_fut=True, inverse=True) 
-		for index in range(len(self.trackers)):
-			trk_tmp = trks[index]
-			xyz = np.array([trk_tmp.x, trk_tmp.y, trk_tmp.z]).reshape((1, -1))
-			compensated = egomotion_compensation_ID(xyz, self.calib, ego_rot_imu, ego_xyz_imu, left, right)
-			trk_tmp.x, trk_tmp.y, trk_tmp.z = compensated[0]
-
-			# update compensated state in the Kalman filter
-			try:
-				self.trackers[index].kf.x[:3] = copy.copy(compensated).reshape((-1))
-			except:
-				self.trackers[index].kf.x[:3] = copy.copy(compensated).reshape((-1, 1))
-
-		return trks
-
-	def visualization(self, img, dets, trks, calib, hw, save_path, height_threshold=0):
-		# visualize to verify if the ego motion compensation is done correctly
-		# ideally, the ego-motion compensated tracks should overlap closely with detections
-		import cv2 
-		from PIL import Image
-		from AB3DMOT_libs.vis import draw_box3d_image
-		from xinshuo_visualization import random_colors
-
-		dets, trks = copy.copy(dets), copy.copy(trks)
-		img = np.array(Image.open(img))
-		max_color = 20
-		colors = random_colors(max_color)       # Generate random colors
-
-		# visualize all detections as yellow boxes
-		for det_tmp in dets: 
-			img = vis_obj(det_tmp, img, calib, hw, (255, 255, 0))				# yellow for detection
-		
-		# visualize color-specific tracks
-		count = 0
-		ID_list = [tmp.id for tmp in self.trackers]
-		for trk_tmp in trks: 
-			ID_tmp = ID_list[count]
-			color_float = colors[int(ID_tmp) % max_color]
-			color_int = tuple([int(tmp * 255) for tmp in color_float])
-			str_vis = '%d, %f' % (ID_tmp, trk_tmp.o)
-			img = vis_obj(trk_tmp, img, calib, hw, color_int, str_vis)		# blue for tracklets
-			count += 1
-		
-		img = Image.fromarray(img)
-		img = img.resize((hw['image'][1], hw['image'][0]))
-		img.save(save_path)
-
 	def prediction(self):
 		# get predicted locations from existing tracks
-		#TODO : add velocity
 
 		trks = []
 		for t in range(len(self.trackers)):
@@ -265,6 +237,8 @@ class AB3DMOT(object):
 					print(trk.kf.P)
 					print('measurement noise')
 					print(trk.kf.R)
+					print('\n previous velocity')
+					print(trk.get_velocity())
 
 				# kalman filter update with observation (box and velocity)
 				trk.kf.update(bbox3d)
@@ -294,7 +268,7 @@ class AB3DMOT(object):
 			self.trackers.append(trk)
 			new_id_list.append(trk.id)
 			# print('track ID %s has been initialized due to new detection' % trk.id)
-			print('birth of tracklet ',trk.id)
+			print('birth of tracklet',trk.id)
 			self.ID_count[0] += 1
 
 		return new_id_list
@@ -393,7 +367,22 @@ class AB3DMOT(object):
 
 		return affi
 
-	def track(self, dets_all, frame_number, scene_name):
+	def compute_confidance_score(self, results, affi, matched):
+		'''
+		Tracking confidance score is the affinity score between the prediction and the detection
+		i.e : how accurate the prediction was for this object.
+		In case the detection is a new object, it makes sense to keep the detection score as the tracking score (default value)
+		In case it's an existing tracked object, we replace the detection score by the affinity score.
+		'''
+
+		if len(matched)>0:
+			for d,t in matched:
+				for res in results[0]:
+					if res[9]==d : res[14]=affi[d][t]
+
+		return results
+
+	def track(self, dets_all, frame_number, scene_name, verbose):
 		"""
 		Params:
 		  	dets_all: dataframe
@@ -406,11 +395,7 @@ class AB3DMOT(object):
 		dets, info = self.format_dets_df(dets_all)
 		# dets - a dataframe of detections in the format ['x','y','z','w','l','h','theta']
 		# 		info: a array of other info for each det [vx,vy,vz,r1,r2,r3,r4,score,token,t]
-		
-		# print('processed dets dataframe :')
-		# print(dets)
-
-
+	
 		if self.debug_id: print('\nframe is %s' % frame_number)
 	
 		# logging
@@ -428,66 +413,62 @@ class AB3DMOT(object):
 		# tracks propagation based on velocity
 		trks = self.prediction()
 
-		# # ego motion compensation, adapt to the current frame of camera coordinate
-		# if (frame_number > 0) and (self.ego_com) and (self.oxts is not None):
-		# 	trks = self.ego_motion_compensation(frame_number, trks)
-
-		# # visualization
-		# if self.vis and (self.vis_dir is not None):
-		# 	img = os.path.join(self.img_dir, f'{frame_number:06d}.png')
-		# 	save_path = os.path.join(self.vis_dir, f'{frame_number:06d}.jpg'); mkdir_if_missing(save_path)
-		# 	self.visualization(img, dets, trks, self.calib, self.hw, save_path)
-
 		# matching
 		trk_innovation_matrix = None
-		# if self.metric == 'm_dis':
-		# 	trk_innovation_matrix = [trk.compute_innovation_matrix() for trk in self.trackers] 
+		if self.metric == 'm_dis':
+			trk_innovation_matrix = [trk.compute_innovation_matrix() for trk in self.trackers] 
 		
 		matched, unmatched_dets, unmatched_trks, cost, affi = \
 			data_association(dets, trks, self.metric, self.thres, self.algm, trk_innovation_matrix)
 
-		# print('detections are')
-		# print(dets)
-		# print('tracklets are')
-		# print(trks)
-		print('matched indexes are')
-		print(matched)
-		print('unmatched indexes are')
-		print(unmatched_dets)
-		print('unmatched tracklets are')
-		print(unmatched_trks)
-		print('raw affinity matrix is')
-		print(affi)
-
-		# input()
+		if verbose>=2:
+			print('detections are')
+			print(dets)
+			print('tracklets are')
+			print(trks)
+		
+		if verbose>=3:
+			print('matched indexes are')
+			print(matched)
+			print('unmatched indexes are')
+			print(unmatched_dets)
+			print('unmatched tracklets are')
+			print(unmatched_trks)
+			print('raw affinity matrix is')
+			print(affi)
 
 		# update trks with matched detection measurement
 		self.update(matched, unmatched_trks, dets, info)
 		
-
 		# create and initialise new trackers for unmatched detections
 		new_id_list = self.birth(dets, info, unmatched_dets)
-		print('new ID list is')
-		print(new_id_list)
+
+		if verbose>=3:
+			print('new ID list is')
+			print(new_id_list)
 
 		# output existing valid tracks
 		results = self.output()
-		if len(results) > 0: results = [np.concatenate(results)]		# x,y,z,h,w,l,theta, vel, ID, other info, confidence
+		if len(results) > 0: results = [np.concatenate(results)]		# h,w,l, x,y,z, theta, vx,vy, ID, r1:r4, confidence, token, t
 		else:            	 results = [np.empty((0, 15))]
 
-		self.id_now_output = results[0][:, 7].tolist()					# only the active tracks that are outputed
+		results = self.compute_confidance_score(results, affi, matched)	# replacing confidance score for active tracks
+
+		self.id_now_output = results[0][:, 9].tolist()					# only the active tracks that are outputed
 
 		# post-processing affinity to convert to the affinity between resulting tracklets
-		# if self.affi_process:
-		# 	affi = self.process_affi(affi, matched, unmatched_dets, new_id_list)
-		# 	# print_log('processed affinity matrix is', log=self.log, display=False)
-		# 	# print_log(affi, log=self.log, display=False)
+		if self.affi_process:
+			affi = self.process_affi(affi, matched, unmatched_dets, new_id_list)
+			if verbose>=4:
+				print('processed affinity matrix is')
+				print(affi)
 
 		# logging
-		# print('\ntop-1 cost selected')
-		# print(cost)
-		# for result_index in range(len(results)):
-		# 	print(results[result_index][:, :8])
-		# 	print('')
+		if verbose>=4:
+			print('\ntop-1 cost selected')
+			print(cost)
+			for result_index in range(len(results)):
+				print(results[result_index][:, :8])
+				print('')
 
 		return results, affi

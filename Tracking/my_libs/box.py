@@ -130,21 +130,6 @@ class Box3D:
         z_corners = h / 2 * np.array([1,  1, -1, -1,  1,  1, -1, -1])
 
 
-        '''
-        Nuscenes function box.corners:
-        Cannot use this because requires me to create a nuscenes box object => carrying quaternion value 
-        in the pipeline => changes EVERYWHERE including in kalman filter (box3D object currently carried)
-        around and it is the predicted object by kalman filter.
-        modifying this => modifying a lot of the pipeline.
-
-        # 3D bounding box corners. (Convention: x points forward, y to the left, z up.) => different convention than camera setup...
-        x_corners = l / 2 * np.array([1,  1,  1,  1, -1, -1, -1, -1])
-        y_corners = w / 2 * np.array([1, -1, -1,  1,  1, -1, -1,  1])
-        z_corners = h / 2 * np.array([1,  1, -1, -1,  1,  1, -1, -1])
-        corners = np.vstack((x_corners, y_corners, z_corners))
-        '''
-
-
         # rotate and translate 3d bounding box
         corners_3d = np.dot(R, np.vstack([x_corners, y_corners, z_corners]))
         corners_3d[0,:] = corners_3d[0,:] + bbox.x
