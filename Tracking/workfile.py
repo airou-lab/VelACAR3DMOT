@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import pickle
 import math
+import time
+import random
 from typing import List, Dict, Any
 from shutil import copyfile
 from pyquaternion import Quaternion
@@ -198,44 +200,6 @@ def get_sensor_data(nusc,sensor,token,verbose=False):
     return cs_record, cam_intrinsic
 
 
-def filter_det(args, det_sample):
-    #removes out of bounds detection (technically good detections but not when compared to ground truth)
-        
-    if det_sample['detection_score']<args.score_thresh:
-        return False
-
-    x,y,z = det_sample['translation']   
-
-    w,h,l = det_sample['size']
-
-    r1,r2,r3,r4 = det_sample['rotation']
-
-    q = Quaternion(r1,r2,r3,r4)
-
-    sample = nusc.get('sample', det_sample['sample_token']) # sample 0
-    sample_data = nusc.get('sample_data', sample['data'][args.sensor])   # data for sample 0
-    meta_token = sample_data['token'] 
-
-    cs_record, ego_pose, cam_intrinsic = get_sample_metadata(nusc,args.sensor,meta_token,verbose=False)
-
-    box = Box(center = [x,y,z],
-                size = [w,l,h],
-                orientation = q,
-                )
-    # Move box to ego vehicle coord system.
-    box.translate(-np.array(ego_pose['translation']))
-    box.rotate(Quaternion(ego_pose['rotation']).inverse)
-
-    #  Move box to sensor coord system.
-    box.translate(-np.array(cs_record['translation']))
-    box.rotate(Quaternion(cs_record['rotation']).inverse)
-    
-    if box.center[2]<=0 or abs(box.center[0])>box.center[2]: # z value (front) cannot be < 0  
-        return False
-
-    return True
-
-
 def get_det_df(cat_detection_root,detection_method,cat,det_file,verbose=False):
 
         f = open(os.path.join(cat_detection_root,detection_method+'_'+cat,det_file),'r')
@@ -273,7 +237,7 @@ def get_det_df(cat_detection_root,detection_method,cat,det_file,verbose=False):
                                 float(score),
                                 token])
 
-
+        f.close()
         detection_df = pd.DataFrame(detection_list,columns =['t','x','y','z','w','l','h','r1','r2','r3','r4','vx','vy','vz','score','token'])
         return(detection_df)
 
@@ -335,7 +299,7 @@ def get_gt_at_t(cat,t,sample,next_sample_tokens_dict):
                 x,y,z = box.center
                 w,l,h = box.wlh
                 r1,r2,r3,r4 = box.orientation
-                score = 1
+                score = 0.99                #random.random()             # random score provides better eval results
                 token = box.token
                 vx,vy,vz = box.velocity
                 vz=0
@@ -382,6 +346,7 @@ def fixed_colors():
         color_tmp = (float(color.split(',')[0])/255,float(color.split(',')[1])/255,float(color.split(',')[2])/255,)
         color_val.append(color_tmp)
 
+    f.close()
     return color_val
 
 
@@ -396,8 +361,14 @@ def log_results(results_df,cat,scene_name,detection_method):
     output_path = os.path.join('results','logs',detection_method,scene_name)
     mkdir_if_missing(output_path)
 
-    # resetting panda index 
+    # resetting dataframe index 
     results_df=results_df.reset_index(drop=True)
+
+    # reformatting df in wlh format
+    h_col =  results_df.pop('h')
+    results_df.insert(2,'h',h_col)
+
+    # dumping output
     results_df.to_pickle(os.path.join(output_path,cat+'.pkl'))
 
 def concat_results(args,data_dir,cat_list,nusc):
@@ -405,7 +376,8 @@ def concat_results(args,data_dir,cat_list,nusc):
     data fetched at results/logs/<detection_method>/<scene>/<cat>.pkl
     output at output/track_output_<detection_method>/track_results_nusc.json
     '''
-
+    cnt = 0
+    cnt_tot = 0
     meta_dict = {"use_camera": True,
         "use_lidar": False,
         "use_radar": True,
@@ -419,19 +391,21 @@ def concat_results(args,data_dir,cat_list,nusc):
 
     for scene in nusc.scene:
         scene_name = scene['name']
-        if scene_name not in scenes_list:
+        if scene_name not in scenes_list:   #only parsing scenes we used (i.e the corrrect dataset split)
+            if args.verbose>=1:
+                print('skipping',scene_name)
             continue
 
         print ('Processing scene', scene_name)
         scene_df = pd.DataFrame(columns =['w','l','h','x','y','z','vx','vy','ID','r1','r2','r3','r4','score','token','object'])
-        token_mem=[]
 
         for cat in cat_list:
             df_tmp = pd.read_pickle(os.path.join(data_dir,scene_name,cat+'.pkl'))
             df_tmp = df_tmp.drop(['theta','t'],axis=1)
 
             if df_tmp.empty:
-                # print('no detection for %s in %s'%(cat,scene_name)) 
+                if args.verbose>=1:
+                    print('no detection for %s in %s'%(cat,scene_name)) 
                 continue
 
             df_tmp.loc[:,'object']=cat
@@ -441,6 +415,8 @@ def concat_results(args,data_dir,cat_list,nusc):
 
         scene_df = scene_df.reset_index(drop=True)
 
+        cnt += len(scene_df.loc[scene_df['object']=='car'])
+        cnt_tot += len(scene_df)
 
         # Parsing scene token. Using nuscenes loop to go through all the tokens even if no detections
         first_token = scene['first_sample_token']
@@ -452,10 +428,8 @@ def concat_results(args,data_dir,cat_list,nusc):
 
             token = sample_data['sample_token']
 
-            if token not in token_mem:
+            if sample_data['is_key_frame'] == True:
         
-                token_mem.append(token)
-
                 sample_result_list = []
                 
                 df_by_token = scene_df.loc[scene_df['token']==token]
@@ -463,18 +437,36 @@ def concat_results(args,data_dir,cat_list,nusc):
                 for i in range(len(df_by_token)):
                     sample_df = df_by_token.iloc[i]
 
+                    # Creating unique object ID (tracking ID + object number)
+                    trk_id = str(sample_df['ID'])
+
+                    if sample_df['object'] == 'car':
+                        trk_id += '_1'
+                    if sample_df['object'] == 'pedestrian':
+                        trk_id += '_2'
+                    if sample_df['object'] == 'truck':
+                        trk_id += '_3'
+                    if sample_df['object'] == 'bus':
+                        trk_id += '_4'
+                    if sample_df['object'] == 'bicycle':
+                        trk_id += '_5'
+                    if sample_df['object'] == 'motorcycle':
+                        trk_id += '_6'
+                    if sample_df['object'] == 'trailer':
+                        trk_id += '_7'
+
                     sample_result={'sample_token':token,
                                     'translation': [sample_df['x'],sample_df['y'],sample_df['z']],
                                     'size': [sample_df['w'],sample_df['l'],sample_df['h']],
                                     'rotation': [sample_df['r1'],sample_df['r2'],sample_df['r3'],sample_df['r4']],
                                     'velocity': [sample_df['vx'],sample_df['vy']],
-                                    'tracking_id': str(sample_df['ID']),
+                                    'tracking_id': trk_id,
                                     'tracking_name': sample_df['object'],
-                                    'tracking_score':sample_df['score']
+                                    'tracking_score': str(sample_df['score']) #random.random()
                             }
 
                     sample_result_list.append(sample_result)
-                
+
                 results_dict[token] = sample_result_list
 
             if sample_data['next'] == "":
@@ -484,6 +476,10 @@ def concat_results(args,data_dir,cat_list,nusc):
                 #GOTO next sample
                 sample_token = sample_data['next']
                 sample_data = nusc.get('sample_data', sample_token)
+    
+    # print(cnt)
+    # print(cnt_tot)
+    # input()
 
     output_dict={'meta':meta_dict, 'results':results_dict}
 
@@ -491,50 +487,11 @@ def concat_results(args,data_dir,cat_list,nusc):
     mkdir_if_missing('output')
     mkdir_if_missing(output_dir)
 
-    print('Dumping output...')
+    print('Dumping output at :', output_dir+'/track_results_nusc.json')
     with open(output_dir+'/track_results_nusc.json', 'w') as file: 
         json.dump(output_dict, file)
 
     print('Done.')
-
-    exit()
-
-def debug_results(args,data_dir,cat_list,nusc):
-    scenes_list = os.listdir(data_dir)
-    global_token_mem = []
-
-    for scene in scenes_list:
-        print ('Processing scene', scene)
-        scene_df = pd.DataFrame(columns =['w','l','h','x','y','z','vx','vy','ID','r1','r2','r3','r4','score','token','object'])
-
-        for cat in cat_list:
-            df_tmp = pd.read_pickle(os.path.join(data_dir,scene,cat+'.pkl'))
-            df_tmp = df_tmp.drop(['theta','t'],axis=1)
-
-            if df_tmp.empty:
-                print('no detection for %s in %s'%(cat,scene)) 
-                continue
-
-            df_tmp.loc[:,'object']=cat
-            print('df_tmp',cat)
-            print(df_tmp)
-            input()
-
-            scene_df = pd.concat([scene_df,df_tmp])
-
-        scene_df = scene_df.reset_index(drop=True)
-        print('scene_df',scene)
-        print(scene_df)
-        input()
-
-        token_list = scene_df['token'].drop_duplicates().tolist()
-
-        for item in token_list:
-            if item not in global_token_mem:
-                global_token_mem.append(item)
-
-    print(global_token_mem)
-    print(len(global_token_mem))
 
     exit()
 
@@ -595,18 +552,9 @@ def separate_det_by_cat_and_scene(args,detection_file,cat_list,nusc):
                         det_cnt = 0
                         sample_token = nusc_data['sample_token']
                         for det_sample in det_data['results'][sample_token]:
-
-                            rejection=True
-
-                            # two different ways to filter detections
-                            if args.use_filter_det and det_sample['detection_name']==cat and filter_det(args,det_sample)==True:
-                                rejection=False
                             
-                            elif det_sample['detection_name']==cat and det_sample['detection_score']>=args.score_thresh:
-                                rejection = False
+                            if det_sample['detection_name']==cat and det_sample['detection_score']>=args.score_thresh:
 
-
-                            if rejection ==False :
                                 det_cnt+=1          #detection counter
 
                                 f.write(str(count))
@@ -621,7 +569,8 @@ def separate_det_by_cat_and_scene(args,detection_file,cat_list,nusc):
                                 f.write(',%s'%(str(det_sample['detection_score'])))
                                 f.write(',%s'%(str(sample_token)))
                                 f.write(',\n')
-                                
+                        
+                        f.close()
                         print('\nfound %d detections of category:'%(det_cnt),cat,',in scene:',scene['name'],'token:',sample_token)
                         print('results logged at: ',f.name)
                         print('corresponding image:',nusc_data['filename'])
@@ -639,13 +588,12 @@ def separate_det_by_cat_and_scene(args,detection_file,cat_list,nusc):
                         nusc_data = nusc.get('sample_data', next_token)
 
 
-
     print(100*'#','\nfinished separating detections\n',100*('#'))
     exit()
 
-def initialize_tracker(cat, ID_start, nusc, det_file):
+def initialize_tracker(args, cat, ID_start, nusc, det_file):
 
-    tracker = AB3DMOT(cat, ID_init=ID_start) 
+    tracker = AB3DMOT(args, cat, ID_init=ID_start) 
 
     assert det_file in list(scene['name']+'.txt' for scene in nusc.scene)
 
@@ -666,19 +614,27 @@ def tracking(args,cat_list,nusc):
 
         for det_file in det_file_list:
             
-            sample_mem = []
+            # Computation time for this file
+            comp_time_start = time.time()
             
             # if det_file != 'scene-0103.txt':    # DEBUG
             #     continue
 
-            results_df = pd.DataFrame(columns =['w','l','h','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])    # full results for this scene
+            # initializing output dataframe
+            results_df = pd.DataFrame(columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])    # full results for this scene
 
-            tracker, scene, first_token = initialize_tracker(cat=cat, ID_start=0, nusc=nusc, det_file=det_file)
+            # initializing AB3DDMOT
+            tracker, scene, first_token = initialize_tracker(args=args, cat=cat, ID_start=0, nusc=nusc, det_file=det_file)
 
-            # print ('initial trackers :',tracker.trackers)
+            if args.verbose>=3:
+                print ('initial trackers :',tracker.trackers)
+            
             print ('scene :',scene['name'])
-            print (scene)
 
+            if args.verbose>=2:
+                print (scene)
+
+            # first token init
             t=0
             sample_token = first_token
             sample = nusc.get('sample', first_token) # sample 0
@@ -688,17 +644,18 @@ def tracking(args,cat_list,nusc):
 
                 print ('t = ',t)
 
-                # if t<95:                 # DEBUG
+                # if t<25:                 # DEBUG
                 #     #GOTO next sample
                 #     sample_token = sample_data['next']
                 #     sample_data = nusc.get('sample_data', sample_token)
                 #     t+=1
                 #     continue
 
-                # print(200*'*','\n')
-                # # print('Sample: ',sample) 
-                # print('\nSample data:',sample_data)
-                # print('\n',200*'-','\n')
+                if args.verbose>=3:
+                    print(200*'*','\n')
+                    print('Sample: ',sample) 
+                    print('\nSample data:',sample_data)
+                    print('\n',200*'-','\n')
 
                 metadata_token = sample_data['token']
                 cs_record, ego_pose, cam_intrinsic = get_sample_metadata(nusc,args.sensor,metadata_token,verbose=False)
@@ -706,58 +663,68 @@ def tracking(args,cat_list,nusc):
                 det_df = get_det_df_at_t(args.cat_detection_root,args.detection_method,cat,det_file,t)
                 # gt_df = get_gt_at_t(cat,t,sample,sample_data,cs_record,ego_pose)
 
-                # print('\n',200*'-','\n')
-                # print('Ego pose:',ego_pose)
-                # print('\nCalibrated Sensor record:',cs_record)
-                # print('\nCam intrinsic:',cam_intrinsic)
-                # print('\n',200*'-','\n')
-
-                if len(det_df)>0:
+                if args.verbose>=2:
                     print('\n',200*'-','\n')
-                    print('Detection dataframe:')
-                    print(det_df)
-                    print('\nDetection token:',det_df['token'][0])
+                    print('Ego pose:',ego_pose)
+                    print('\nCalibrated Sensor record:',cs_record)
+                    print('\nCam intrinsic:',cam_intrinsic)
                     print('\n',200*'-','\n')
-                else :
-                    print('\n',200*'-','\n')
-                    print('No detection for this sample:')
-                    print('\n',200*'-','\n')
+                
+                if args.verbose>=1:
+                    if len(det_df)>0:
+                        print('\n',200*'-','\n')
+                        print('Detection dataframe:')
+                        print(det_df)
+                        print('\nDetection token:',det_df['token'][0])
+                        print('\n',200*'-','\n')
+                    else :
+                        print('\n',200*'-','\n')
+                        print('No detection for this sample:')
+                        print('\n',200*'-','\n')
 
-                print('resume tracking :')
+                    print('resume tracking :')
 
 
-                results, affi = tracker.track(det_df, t, scene['name'])
+                results, affi = tracker.track(det_df, t, scene['name'], args.verbose)
 
                 # displaying results
                 if len(results[0])>0:
-                    results_df_at_t = pd.DataFrame(results[0],columns =['w','l','h','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
-                    results_df_at_t = results_df_at_t.iloc[::-1]
+                    results_df_at_t = pd.DataFrame(results[0],columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
+                    results_df_at_t = results_df_at_t.iloc[::-1]    # flip rows
                     results_df_at_t = results_df_at_t.reset_index(drop=True)
 
-                    print('\n',200*'-','\n')
-                    print ('tracking results:\n',results_df_at_t)
-                    # print ('affinity matrix:',affi)
-                    print('\n',200*'-','\n')        
+                    if args.verbose>=1:
+                        print('\n',200*'-','\n')
+                        print ('tracking results:\n',results_df_at_t)
+                        print('\n',200*'-','\n')
+       
                 else :
                     # reinitialize results_df_at_t 
-                    results_df_at_t = pd.DataFrame(columns =['w','l','h','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
-                    print('\n',200*'-','\n')
-                    print ('tracking results:\n',results)
-                    # print ('affinity matrix:',affi)
+                    results_df_at_t = pd.DataFrame(columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
+                    
+                    if args.verbose>=1:
+                        print('\n',200*'-','\n')
+                        print ('tracking results:\n',results)
+                        print('\n',200*'-','\n')
+                
+                if args.verbose>=2:
+                    print ('affinity matrix:',affi)
                     print('\n',200*'-','\n')
 
 
                 # logging results for metrics
-                if sample_data['sample_token'] not in sample_mem:
-                    sample_mem.append(sample_data['sample_token'])      # using sample_mem to only use samples for metrics (sweeps not supported)
+                if sample_data['is_key_frame'] == True:         # Only using samples for eval
+
                     # Correcting t and sample token values for un-updated tracklet at this frame (still in memory)
                     results_df_at_t['t']=t 
                     results_df_at_t['token']=sample_data['sample_token']
+                    
                     # Adding to global results
                     results_df=pd.concat([results_df,results_df_at_t])
-                    # # print(100*'$')
-                    # print(results_df)
-                    # input()
+                    
+                    if args.verbose>=3:
+                        print(100*'$')
+                        print(results_df)
 
 
                 if args.log_viz:
@@ -791,6 +758,16 @@ def tracking(args,cat_list,nusc):
                 if sample_data['next'] == "":
                     #GOTO next scene
                     print("no next data")
+                    comp_time_end = time.time() - comp_time_start
+                    comp_time_by_det = divmod(comp_time_end,60)                    
+                    print('handled %d frames in %d m %.2f s'%(t,comp_time_by_det[0],comp_time_by_det[1]))
+
+                    # Logging computation time
+                    f = open('./results/logs/time'+args.detection_method+'.txt','a')
+                    f.write('%s, %s : handled %d frames in %dm %.2fs'%(scene['name'], cat, t, comp_time_by_det[0], comp_time_by_det[1]))
+                    f.write(',\n')
+                    f.close()
+
                     break
                 else:
                     #GOTO next sample
@@ -807,24 +784,30 @@ def gt_tracking(args,cat_list,nusc):
         print("category: ",cat)
         # det_file_list = list(scene['name']+'.txt' for scene in nusc.scene)
 
-        det_file_list = ['scene-0553.txt','scene-0796.txt','scene-0103.txt', 'scene-0916.txt']
+        # det_file_list = ['scene-0553.txt','scene-0796.txt','scene-0103.txt', 'scene-0916.txt']
+        det_file_list = ['scene-0103.txt','scene-0553.txt','scene-0796.txt','scene-0916.txt']
 
         for det_file in det_file_list:
-        
-            sample_mem = []
+            
+            # Computation time for this file
+            comp_time_start = time.time()
+
+            # dictionary used to get every gt at a frame
             next_sample_tokens_dict = dict()
 
             # if det_file != 'scene-0103.txt':    # DEBUG
             #     continue
                         
-            results_df = pd.DataFrame(columns =['w','l','h','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])    # full results for this scene
+            results_df = pd.DataFrame(columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])    # full results for this scene
 
             # getting tracker scene and token using nuscene indexing
-            tracker, scene, first_token = initialize_tracker(cat=cat, ID_start=0, nusc=nusc, det_file=det_file)
+            tracker, scene, first_token = initialize_tracker(args=args, cat=cat, ID_start=0, nusc=nusc, det_file=det_file)
 
             # print ('initial trackers :',tracker.trackers)
             print ('scene :',scene['name'])
-            # print (scene)
+            
+            if args.verbose>=2:
+                print (scene)
 
             t=0
             sample_token = first_token
@@ -835,49 +818,62 @@ def gt_tracking(args,cat_list,nusc):
 
                 print ('t = ',t)
 
+                if args.verbose>=3:
+                    print(200*'*','\n')
+                    print('Sample: ',sample) 
+                    print('\nSample data:',sample_data)
+                    print('\n',200*'-','\n')
+
+
                 metadata_token = sample_data['token']
                 cs_record, ego_pose, cam_intrinsic = get_sample_metadata(nusc,args.sensor,metadata_token,verbose=False)
 
                 gt_df, next_sample_tokens_dict = get_gt_at_t(cat,t,sample,next_sample_tokens_dict)
 
-                if len(gt_df)>0:
-                    print('\n',200*'-','\n')
-                    print('Detection dataframe:')
-                    print(gt_df)
-                    print('\nDetection token:',gt_df['token'][0])
-                    print('\n',200*'-','\n')
-                else :
-                    print('\n',200*'-','\n')
-                    print('No detection for this sample:')
-                    print('\n',200*'-','\n')
+                if args.verbose>=1:
+                    if len(gt_df)>0:
+                        print('\n',200*'-','\n')
+                        print('Detection dataframe:')
+                        print(gt_df)
+                        print('\nDetection token:',gt_df['token'][0])
+                        print('\n',200*'-','\n')
+                    else :
+                        print('\n',200*'-','\n')
+                        print('No detection for this sample:')
+                        print('\n',200*'-','\n')
 
-                print('resume tracking :')
+                    print('resume tracking :')
 
 
-                results, affi = tracker.track(gt_df, t, scene['name'])
+                results, affi = tracker.track(gt_df, t, scene['name'], args.verbose)
 
                 # displaying results
                 if len(results[0])>0:
-                    results_df_at_t = pd.DataFrame(results[0],columns =['w','l','h','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
+                    results_df_at_t = pd.DataFrame(results[0],columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
                     results_df_at_t = results_df_at_t.iloc[::-1]
                     results_df_at_t = results_df_at_t.reset_index(drop=True)
 
-                    print('\n',200*'-','\n')
-                    print ('tracking results:\n',results_df_at_t)
-                    # print ('affinity matrix:',affi)
-                    print('\n',200*'-','\n')        
+                    if args.verbose>=1:
+                        print('\n',200*'-','\n')
+                        print ('tracking results:\n',results_df_at_t)
+                        print('\n',200*'-','\n')
+     
                 else :
                     # reinitialize results_df_at_t 
-                    results_df_at_t = pd.DataFrame(columns =['w','l','h','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
-                    print('\n',200*'-','\n')
-                    print ('tracking results:\n',results)
-                    # print ('affinity matrix:',affi)
+                    results_df_at_t = pd.DataFrame(columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
+                    
+                    if args.verbose>=1:
+                        print('\n',200*'-','\n')
+                        print ('tracking results:\n',results)
+                        print('\n',200*'-','\n')
+
+                if args.verbose>=2:
+                    print ('affinity matrix:',affi)
                     print('\n',200*'-','\n')
 
 
                 # logging results for metrics
-                if sample_data['sample_token'] not in sample_mem:
-                    sample_mem.append(sample_data['sample_token'])      # using sample_mem to only use samples for metrics (sweeps not supported)
+                if sample_data['is_key_frame'] == True:         # Only using samples for eval
 
                     # Correcting t and sample token values for un-updated tracklet at this frame (still in memory)
                     results_df_at_t['t']=t 
@@ -885,7 +881,10 @@ def gt_tracking(args,cat_list,nusc):
 
                     # Adding to global results
                     results_df=pd.concat([results_df,results_df_at_t])
-                   
+
+                    if args.verbose>=3:
+                        print(100*'$')
+                        print(results_df)
 
                 if args.log_viz:
                     log_tracking_visualization(args=args,
@@ -918,6 +917,16 @@ def gt_tracking(args,cat_list,nusc):
                 if sample_data['next'] == "":
                     #GOTO next scene
                     print("no next data")
+                    comp_time_end = time.time() - comp_time_start
+                    comp_time_by_det = divmod(comp_time_end,60)                    
+                    print('handled %d frames in %d m %.2f s'%(t,comp_time_by_det[0],comp_time_by_det[1]))
+
+                    # Logging computation time
+                    f = open('./results/logs/time'+args.detection_method+'.txt','a')
+                    f.write('%s, %s : handled %d frames in %dm %.2fs'%(scene['name'], cat, t, comp_time_by_det[0], comp_time_by_det[1]))
+                    f.write(',\n')
+                    f.close()
+
                     break
                 else:
                     #GOTO next sample
@@ -964,9 +973,7 @@ def tracking_visualization(args,nusc,data_root,sample_data,results,cs_record,cam
         color_int = tuple([int(tmp * 255) for tmp in color_float])
         c = color_int
 
-        if args.use_filter_det:
-            box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
-        elif box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
+        if box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
             box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
         
 
@@ -1064,10 +1071,7 @@ def log_tracking_visualization(args,nusc,data_root,sample_data,results,cs_record
         color_int = tuple([int(tmp * 255) for tmp in color_float])
         c = color_int
 
-        if args.use_filter_det:
-            box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
-
-        elif t_res == t and box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
+        if t_res == t and box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
             box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
     
 
@@ -1165,10 +1169,7 @@ def detection_visualization (args, cat_list, nusc):
                     # print('xyz det :',box.center,' score:', box.score, 'angle:', box.orientation.degrees)
                     c = np.array([90,200,220]) / 255.0
             
-                    if args.use_filter_det:
-                        box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
-
-                    elif box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
+                    if box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
                         box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
             
                 while True :
@@ -1194,23 +1195,38 @@ def detection_visualization (args, cat_list, nusc):
 # Main
 ############################################################################################################################################################################
 
+# sensor_list = ['CAM_FRONT', 'CAM_FRONT_RIGHT', 'CAM_BACK', 'CAM_BACK_RIGHT', 'CAM_BACK_LEFT', 'CAM_FRONT_LEFT']
+
 def create_parser():
 
     parser = argparse.ArgumentParser()
+    
+    # nuScenes loading
     parser.add_argument('--data_root', type=str, default='./data/nuScenes', help='nuScenes data folder')
-    parser.add_argument('--cat_detection_root', type=str, default='./data/cat_detection/', help='category-splitted detection folder')
-    parser.add_argument('--detection_method', type=str, default='CRN', help='detection method')
-    parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='train_val/test')
     parser.add_argument('--split', type=str, default='train', help='train/val/test')
+    parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='train_val/test')
+
+    # Detection config
+    parser.add_argument('--detection_method', type=str, default='CRN', help='detection method')
     parser.add_argument('--score_thresh', type=float, default=0.5, help='minimum detection confidence')
+    parser.add_argument('--cat_detection_root', type=str, default='./data/cat_detection/', help='category-splitted detection folder')
+
+    # Tracking config
+    parser.add_argument('--use_vel', type=bool, default=True, help='use radar velocity for prediction or not')
+    parser.add_argument('--affi_pro', type=bool, default=True, help='use post-processing affinity')
+
+
+    # Action
     parser.add_argument('--go_sep', action='store_true', default=False, help='separate detections by category (required once)')
     parser.add_argument('--gt_track', action='store_true', default=False, help='tracking using ground thruth instead of detections (debug)')
     parser.add_argument('--log_viz', action='store_true', default=False, help='Logging tracking visualization (saving .png files) directly instead of displaying')
     parser.add_argument('--viz', action='store_true', default=False, help='display tracking visualization (superseeded by log_viz)')
     parser.add_argument('--det_viz', action='store_true', default=False, help='display detection visualization')
     parser.add_argument('--concat', action='store_true', default=False, help='Concatenate results for evaluation')
+
+    # debug and display
     parser.add_argument('--debug','-d' , action='store_true', default=False, help='debug')
-    parser.add_argument('--use_filter_det','-fd' , action='store_true', default=False, help='Use detection filter before separation')
+    parser.add_argument('--verbose','-v' , action='count', default=0, help='verbosity level')
 
     return parser
 
@@ -1220,7 +1236,7 @@ if __name__ == '__main__':
 
     # cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'construction_vehicle', 'motorcycle', 'trailer']
     cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']
-    cat_list = ['bicycle']
+    # cat_list = ['bicycle']
 
     parser = create_parser()
     args = parser.parse_args()
@@ -1244,12 +1260,6 @@ if __name__ == '__main__':
     # Running evaluation on tracking data (needs to be generated first)
     if args.concat:
         concat_results(args,
-                        data_dir='./results/logs/'+args.detection_method,
-                        cat_list=cat_list,
-                        nusc=nusc
-                        )
-    if args.debug:
-        debug_results(args,
                         data_dir='./results/logs/'+args.detection_method,
                         cat_list=cat_list,
                         nusc=nusc
