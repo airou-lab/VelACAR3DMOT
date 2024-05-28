@@ -624,7 +624,7 @@ def tracking(args,cat_list,nusc):
             results_df = pd.DataFrame(columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])    # full results for this scene
 
             # initializing AB3DDMOT
-            tracker, scene, first_token = initialize_tracker(args=args, cat=cat, ID_start=0, nusc=nusc, det_file=det_file)
+            tracker, scene, first_token = initialize_tracker(args=args, cat=cat, ID_start=1, nusc=nusc, det_file=det_file)
 
             if args.verbose>=3:
                 print ('initial trackers :',tracker.trackers)
@@ -801,7 +801,7 @@ def gt_tracking(args,cat_list,nusc):
             results_df = pd.DataFrame(columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])    # full results for this scene
 
             # getting tracker scene and token using nuscene indexing
-            tracker, scene, first_token = initialize_tracker(args=args, cat=cat, ID_start=0, nusc=nusc, det_file=det_file)
+            tracker, scene, first_token = initialize_tracker(args=args, cat=cat, ID_start=1, nusc=nusc, det_file=det_file)
 
             # print ('initial trackers :',tracker.trackers)
             print ('scene :',scene['name'])
@@ -969,7 +969,7 @@ def tracking_visualization(args,nusc,data_root,sample_data,results,cs_record,cam
         box.translate(-np.array(cs_record['translation']))
         box.rotate(Quaternion(cs_record['rotation']).inverse)
         
-        color_float = colors[int(ID) % max_color]           # loops back to first color if more than max_color
+        color_float = colors[int(ID)-1 % max_color]           # loops back to first color if more than max_color
         color_int = tuple([int(tmp * 255) for tmp in color_float])
         c = color_int
 
@@ -1067,7 +1067,7 @@ def log_tracking_visualization(args,nusc,data_root,sample_data,results,cs_record
         box.rotate(Quaternion(cs_record['rotation']).inverse)
         
         # generating colors
-        color_float = colors[int(ID) % max_color]           # loops back to first color if more than max_color
+        color_float = colors[int(ID)-1 % max_color]           # loops back to first color if more than max_color
         color_int = tuple([int(tmp * 255) for tmp in color_float])
         c = color_int
 
@@ -1212,9 +1212,11 @@ def create_parser():
     parser.add_argument('--cat_detection_root', type=str, default='./data/cat_detection/', help='category-splitted detection folder')
 
     # Tracking config
-    parser.add_argument('--use_vel', type=bool, default=True, help='use radar velocity for prediction or not')
-    parser.add_argument('--affi_pro', type=bool, default=True, help='use post-processing affinity')
+    parser.add_argument('--use_vel', action='store_true', dest='use_vel', default=True, help='use radar velocity for prediction')
+    parser.add_argument('--no-use_vel', action='store_false', dest='use_vel', default=True, help='use radar velocity for prediction')
 
+    parser.add_argument('--affi_pro', action='store_true', dest='affi_pro', default=True, help='use post-processing affinity')
+    parser.add_argument('--no-affi_pro', action='store_false', dest='affi_pro', default=True, help='do not use post-processing affinity')
 
     # Action
     parser.add_argument('--go_sep', action='store_true', default=False, help='separate detections by category (required once)')
@@ -1228,6 +1230,17 @@ def create_parser():
     parser.add_argument('--debug','-d' , action='store_true', default=False, help='debug')
     parser.add_argument('--verbose','-v' , action='count', default=0, help='verbosity level')
 
+
+    # other exp param
+    parser.add_argument('--run_hyper_exp','-hexp' , action='store_true', default=False, help='running an experiment testing hyperparam')
+    parser.add_argument('--use_R','-R' , action='store_true', default=False, help='use measurement noise matrix') #to remove
+    parser.add_argument('--metric', type=str, default='giou_3d', help='[dist_3d, dist_2d, m_dis, iou_2d, iou_3d, giou_2d, giou_3d]') 
+    parser.add_argument('--tresh', type=float, default=None, help='distance treshold, bounds depend on metric') 
+    parser.add_argument('--min_hits', type=int, default=None, help='min hits') 
+    parser.add_argument('--max_age', type=int, default=None, help='max memory in frames') 
+
+
+
     return parser
 
 
@@ -1240,7 +1253,11 @@ if __name__ == '__main__':
 
     parser = create_parser()
     args = parser.parse_args()
-    
+
+    assert args.metric in ['dist_3d', 'dist_2d', 'm_dis', 'iou_2d', 'iou_3d', 'giou_2d', 'giou_3d'], 'wrong metric type'
+    assert args.min_hits == None or args.min_hits > 0, 'must be postive integer' 
+    assert args.max_age == None or args.max_age > 0, 'must be postive integer' 
+
     nusc = load_nusc(args.split,args.data_root)
 
     # Separation of all detections by their categories and scenes (required first step)
