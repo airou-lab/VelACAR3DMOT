@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import time
+import sys
 from typing import Tuple, List, Dict, Any
 
 import numpy as np
@@ -234,6 +235,16 @@ class TrackingEval:
         # Print metrics to stdout.
         if self.verbose:
             print_final_metrics(metrics)
+
+        # Print metrics to log
+        print('Logging results')
+        original_stdout = sys.stdout    
+        with open(self.output_dir+'shell_output.txt', 'w') as f:
+            sys.stdout = f
+            print_final_metrics(metrics)
+            
+            # Reset stdout
+            sys.stdout = original_stdout 
 
         # Render curves.
         if render_curves:
