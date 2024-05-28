@@ -13,14 +13,7 @@ from my_libs.kalman_filter import KF
 
 # A Baseline of 3D Multi-Object Tracking
 class AB3DMOT(object):			  	
-	def __init__(self, args, cat, calib=None, oxts=None, img_dir=None, vis_dir=None, hw=None, log=None, ID_init=0):                    
-
-		# vis and log purposes
-		self.img_dir = img_dir
-		self.vis_dir = vis_dir
-		# self.vis = cfg.vis
-		self.hw = hw
-		self.log = log
+	def __init__(self, args, cat, ID_init=0):                    
 
 		# counter
 		self.trackers = []
@@ -30,13 +23,12 @@ class AB3DMOT(object):
 
 		# config
 		self.cat = cat
-		self.sampling_freq=12 #Hz
-		# self.ego_com = cfg.ego_com 			# ego motion compensation
-		self.calib = calib
-		self.oxts = oxts
 		self.affi_process = args.affi_pro	# post-processing affinity
+		
+		# argument-extracted values
 		self.det_name = args.detection_method
-
+		self.use_vel = args.use_vel
+		self.args = args
 
 		self.get_param(cat)
 		self.print_param()
@@ -47,37 +39,71 @@ class AB3DMOT(object):
 
 	def get_param(self, cat):
 
-		if self.det_name == 'CRN':
-			if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
-			elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
-			elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.7, 3, 2
-			elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
-			else: assert False, 'cat name error: %s'%(cat)
-		
-		elif self.det_name == 'Radiant':
-			if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
-			elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
-			elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.7, 3, 2
-			elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
-			else: assert False, 'cat name error: %s'%(cat)
-		
-		elif self.det_name == 'GT':
-			if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
-			elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
-			elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
-			elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.7, 3, 2
-			elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
-			else: assert False, 'cat name error: %s'%(cat)
+		if self.args.run_hyper_exp:
+			if self.det_name == 'CRN':
+				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age 
+				else: assert False, 'cat name error: %s'%(cat)
+			
+			elif self.det_name == 'Radiant':
+				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				else: assert False, 'cat name error: %s'%(cat)
+			
+			elif self.det_name == 'GT':
+				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.tresh, self.args.min_hits, self.args.max_age
+				else: assert False, 'cat name error: %s'%(cat)
 
-		else: assert False, 'Error : Unknown detector %s'%(self.det_name)
+			else: assert False, 'Error : Unknown detector %s'%(self.det_name)
+
+		else :
+			if self.det_name == 'CRN':
+				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
+				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
+				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
+				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.3, 3, 2
+				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
+				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.7, 3, 2
+				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
+				else: assert False, 'cat name error: %s'%(cat)
+			
+			elif self.det_name == 'Radiant':
+				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.5, 1, 2
+				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.3, 3, 2
+				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.4, 1, 2
+				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.7, 3, 2
+				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'dist_3d',    6, 3, 2
+				else: assert False, 'cat name error: %s'%(cat)
+			
+			elif self.det_name == 'GT':
+				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
+				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.5, 1, 2
+				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
+				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.3, 3, 2
+				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
+				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.7, 3, 2
+				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'hungar', 'dist_3d',    6, 3, 2
+				else: assert False, 'cat name error: %s'%(cat)
+
+			else: assert False, 'Error : Unknown detector %s'%(self.det_name)
 
 		# add negative due to it is the cost
 		if metric in ['dist_3d', 'dist_2d', 'm_dis']: thres *= -1	
@@ -240,9 +266,14 @@ class AB3DMOT(object):
 					print('\n previous velocity')
 					print(trk.get_velocity())
 
-				# kalman filter update with observation (box and velocity)
+				# kalman filter update with observation
+				if self.use_vel:
+					# augmenting box with velocity information
+					vel = vel.reshape(3,)
+					bbox3d = np.concatenate([bbox3d, vel], axis=0)
+
 				trk.kf.update(bbox3d)
-				trk.kf.x[7:,0]=vel
+				# trk.kf.x[7:,0]=vel
 
 				if trk.id == self.debug_id:
 					print('after matching')
@@ -251,7 +282,7 @@ class AB3DMOT(object):
 					print(trk.get_velocity())
 
 				trk.kf.x[3] = self.within_range(trk.kf.x[3])
-				trk.info = info[d, 3:][0]
+				trk.info = info[d, 3:][0]	#r1:r4, score, token, t
 
 			# debug use only
 			# else:
@@ -264,7 +295,7 @@ class AB3DMOT(object):
 		new_id_list = list()					# new ID generated for unmatched detections
 
 		for i in unmatched_dets:        			# a scalar of index
-			trk = KF(Box3D.bbox2array(dets[i]), info[i, :3], info[i, 3:], self.ID_count[0])	# x,y,z,theta,l,w,h | vx,vy,vz | r1,r2,r3,r4,score,token,t
+			trk = KF(Box3D.bbox2array(dets[i]), info[i, :3], info[i, 3:], self.ID_count[0], self.cat, self.use_vel, self.args.use_R)	# x,y,z,theta,l,w,h | vx,vy,vz | r1,r2,r3,r4,score,token,t
 			self.trackers.append(trk)
 			new_id_list.append(trk.id)
 			# print('track ID %s has been initialized due to new detection' % trk.id)
