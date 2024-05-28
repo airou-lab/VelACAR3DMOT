@@ -130,7 +130,7 @@ def visualization_by_frame(args,box_list,nusc,token):
 
         elif args.color_method =='id':
             ID = box.label
-            color_float = colors[int(ID) % max_color]           # loops back to first color if more than max_color
+            color_float = colors[int(ID)-1 % max_color]           # loops back to first color if more than max_color
             color_int = tuple([int(tmp * 255) for tmp in color_float])
             c = color_int
 
