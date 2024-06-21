@@ -81,7 +81,7 @@ def data_association(dets, trks, metric, threshold, algm='greedy', \
 	# association based on the affinity matrix
 	if hypothesis == 1:
 		if algm == 'hungar':
-			row_ind, col_ind = linear_sum_assignment(-aff_matrix)      	# hougarian algorithm
+			row_ind, col_ind = linear_sum_assignment(-aff_matrix)      	# hungarian algorithm
 			matched_indices = np.stack((row_ind, col_ind), axis=1)
 		elif algm == 'greedy':
 			matched_indices = greedy_matching(-aff_matrix) 				# greedy matching
