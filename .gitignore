@@ -6,7 +6,7 @@ __pycache__/
 */*/*/*/__pycache__/
 
 # Data folder containing nuScenes data
-data/
+data*/
 
 # Detection generated folders
 Detection/checkpoint/
@@ -14,23 +14,21 @@ Detection/data/
 Detection/CRN.egg-info/
 Detection/build/
 Detection/outputs/
-Detection/detection_output/
+Detection/detection_output*
 
-Detection/pretty_printed_results_nusc.txt
+Detection/*.txt
 Detection/*.json
 
 # Tracking generated folders
 Tracking/data
 Tracking/Xinshuo_PyToolbox
+Tracking/LICENSE
 Tracking/AB3DMOT_libs
 Tracking/configs
 Tracking/docs
 Tracking/external
 Tracking/scripts
-Tracking/output/*bckp
-Tracking/output/*/plots
-Tracking/output/*/metrics_details.json
-Tracking/output/*/track_results_nusc.json
+Tracking/output
 
 Tracking/*.json
 Tracking/results
