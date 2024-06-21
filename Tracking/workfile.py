@@ -208,7 +208,12 @@ def get_det_df(cat_detection_root,detection_method,cat,det_file,verbose=False):
         for det in f:
             # Extracting all values 
             t,x,y,z,w,l,h,r1,r2,r3,r4,vx,vy,score,token,_ = det.split(',')
+            
+            # Setting vertical velocity to 0
             vz = 0
+
+            # Correcting box center from bottom center to 3D center
+            z = float(z)+float(h)
 
             if verbose :
                 print (det)
@@ -230,7 +235,7 @@ def get_det_df(cat_detection_root,detection_method,cat,det_file,verbose=False):
                 print ('token = ',token)
 
             detection_list.append([int(t),
-                                float(x),float(y),float(z),
+                                float(x),float(y),z,
                                 float(w),float(l),float(h),
                                 float(r1),float(r2),float(r3),float(r4),
                                 float(vx)/sampling_freq,float(vy)/sampling_freq,vz, # compensating sampling frequency
@@ -247,7 +252,7 @@ def get_det_df_at_t(cat_detection_root,detection_method,cat,det_file,t):
     df_at_t.reset_index(drop=True,inplace=True)
     return df_at_t
 
-def get_gt_at_t(cat,t,sample,next_sample_tokens_dict):
+def get_gt_at_t(nusc,cat,t,sample,next_sample_tokens_dict):
     '''
     To get every detections at one frame we need the tokens from all the cameras. 
     To know these while not changing the pipeline too much from the regular tracking, this function returns a 
@@ -688,8 +693,8 @@ def tracking(args,cat_list,nusc):
                 results, affi = tracker.track(det_df, t, scene['name'], args.verbose)
 
                 # displaying results
-                if len(results[0])>0:
-                    results_df_at_t = pd.DataFrame(results[0],columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
+                if len(results)>0:
+                    results_df_at_t = pd.DataFrame(results,columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
                     results_df_at_t = results_df_at_t.iloc[::-1]    # flip rows
                     results_df_at_t = results_df_at_t.reset_index(drop=True)
 
@@ -732,7 +737,7 @@ def tracking(args,cat_list,nusc):
                                                 nusc=nusc,
                                                 data_root=args.data_root,
                                                 sample_data=sample_data,
-                                                results=results[0],
+                                                results=results,
                                                 cs_record=cs_record,
                                                 cam_intrinsic=cam_intrinsic,
                                                 ego_pose=ego_pose,
@@ -745,7 +750,7 @@ def tracking(args,cat_list,nusc):
                                             nusc=nusc,
                                             data_root=args.data_root,
                                             sample_data=sample_data,
-                                            results=results[0],
+                                            results=results,
                                             cs_record=cs_record,
                                             cam_intrinsic=cam_intrinsic,
                                             ego_pose=ego_pose,
@@ -763,7 +768,14 @@ def tracking(args,cat_list,nusc):
                     print('handled %d frames in %d m %.2f s'%(t,comp_time_by_det[0],comp_time_by_det[1]))
 
                     # Logging computation time
-                    f = open('./results/logs/time'+args.detection_method+'.txt','a')
+                    mkdir_if_missing('results')
+                    mkdir_if_missing(os.path.join('results','logs'))
+
+                    if 'time'+args.detection_method+'.txt' in os.listdir(os.path.join('results','logs')):
+                        f = open('./results/logs/time'+args.detection_method+'.txt','a')
+                    else :
+                        f = open('./results/logs/time'+args.detection_method+'.txt','w')
+
                     f.write('%s, %s : handled %d frames in %dm %.2fs'%(scene['name'], cat, t, comp_time_by_det[0], comp_time_by_det[1]))
                     f.write(',\n')
                     f.close()
@@ -828,7 +840,7 @@ def gt_tracking(args,cat_list,nusc):
                 metadata_token = sample_data['token']
                 cs_record, ego_pose, cam_intrinsic = get_sample_metadata(nusc,args.sensor,metadata_token,verbose=False)
 
-                gt_df, next_sample_tokens_dict = get_gt_at_t(cat,t,sample,next_sample_tokens_dict)
+                gt_df, next_sample_tokens_dict = get_gt_at_t(nusc,cat,t,sample,next_sample_tokens_dict)
 
                 if args.verbose>=1:
                     if len(gt_df)>0:
@@ -848,8 +860,8 @@ def gt_tracking(args,cat_list,nusc):
                 results, affi = tracker.track(gt_df, t, scene['name'], args.verbose)
 
                 # displaying results
-                if len(results[0])>0:
-                    results_df_at_t = pd.DataFrame(results[0],columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
+                if len(results)>0:
+                    results_df_at_t = pd.DataFrame(results,columns =['h','w','l','x','y','z','theta','vx','vy','ID','r1','r2','r3','r4','score','token','t'])
                     results_df_at_t = results_df_at_t.iloc[::-1]
                     results_df_at_t = results_df_at_t.reset_index(drop=True)
 
@@ -891,7 +903,7 @@ def gt_tracking(args,cat_list,nusc):
                                                 nusc=nusc,
                                                 data_root=args.data_root,
                                                 sample_data=sample_data,
-                                                results=results[0],
+                                                results=results,
                                                 cs_record=cs_record,
                                                 cam_intrinsic=cam_intrinsic,
                                                 ego_pose=ego_pose,
@@ -904,7 +916,7 @@ def gt_tracking(args,cat_list,nusc):
                                             nusc=nusc,
                                             data_root=args.data_root,
                                             sample_data=sample_data,
-                                            results=results[0],
+                                            results=results,
                                             cs_record=cs_record,
                                             cam_intrinsic=cam_intrinsic,
                                             ego_pose=ego_pose,
@@ -922,7 +934,14 @@ def gt_tracking(args,cat_list,nusc):
                     print('handled %d frames in %d m %.2f s'%(t,comp_time_by_det[0],comp_time_by_det[1]))
 
                     # Logging computation time
-                    f = open('./results/logs/time'+args.detection_method+'.txt','a')
+                    mkdir_if_missing('results')
+                    mkdir_if_missing(os.path.join('results','logs'))
+
+                    if 'time'+args.detection_method+'.txt' in os.listdir(os.path.join('results','logs')):
+                        f = open('./results/logs/time'+args.detection_method+'.txt','a')
+                    else :
+                        f = open('./results/logs/time'+args.detection_method+'.txt','w')
+
                     f.write('%s, %s : handled %d frames in %dm %.2fs'%(scene['name'], cat, t, comp_time_by_det[0], comp_time_by_det[1]))
                     f.write(',\n')
                     f.close()
@@ -969,7 +988,7 @@ def tracking_visualization(args,nusc,data_root,sample_data,results,cs_record,cam
         box.translate(-np.array(cs_record['translation']))
         box.rotate(Quaternion(cs_record['rotation']).inverse)
         
-        color_float = colors[int(ID)-1 % max_color]           # loops back to first color if more than max_color
+        color_float = colors[(int(ID)-1) % max_color]           # loops back to first color if more than max_color
         color_int = tuple([int(tmp * 255) for tmp in color_float])
         c = color_int
 
@@ -1067,7 +1086,7 @@ def log_tracking_visualization(args,nusc,data_root,sample_data,results,cs_record
         box.rotate(Quaternion(cs_record['rotation']).inverse)
         
         # generating colors
-        color_float = colors[int(ID)-1 % max_color]           # loops back to first color if more than max_color
+        color_float = colors[(int(ID)-1) % max_color]           # loops back to first color if more than max_color
         color_int = tuple([int(tmp * 255) for tmp in color_float])
         c = color_int
 
@@ -1213,7 +1232,7 @@ def create_parser():
 
     # Tracking config
     parser.add_argument('--use_vel', action='store_true', dest='use_vel', default=True, help='use radar velocity for prediction')
-    parser.add_argument('--no-use_vel', action='store_false', dest='use_vel', default=True, help='use radar velocity for prediction')
+    parser.add_argument('--no-use_vel', action='store_false', dest='use_vel', default=False, help='use radar velocity for prediction')
 
     parser.add_argument('--affi_pro', action='store_true', dest='affi_pro', default=True, help='use post-processing affinity')
     parser.add_argument('--no-affi_pro', action='store_false', dest='affi_pro', default=True, help='do not use post-processing affinity')
@@ -1233,13 +1252,11 @@ def create_parser():
 
     # other exp param
     parser.add_argument('--run_hyper_exp','-hexp' , action='store_true', default=False, help='running an experiment testing hyperparam')
-    parser.add_argument('--use_R','-R' , action='store_true', default=False, help='use measurement noise matrix') #to remove
+    parser.add_argument('--use_R','-R' , action='store_true', default=False, help='use measurement noise matrix') #to remove --> ablation study
     parser.add_argument('--metric', type=str, default='giou_3d', help='[dist_3d, dist_2d, m_dis, iou_2d, iou_3d, giou_2d, giou_3d]') 
-    parser.add_argument('--tresh', type=float, default=None, help='distance treshold, bounds depend on metric') 
+    parser.add_argument('--thresh', type=float, default=None, help='distance treshold, bounds depend on metric') 
     parser.add_argument('--min_hits', type=int, default=None, help='min hits') 
     parser.add_argument('--max_age', type=int, default=None, help='max memory in frames') 
-
-
 
     return parser
 
