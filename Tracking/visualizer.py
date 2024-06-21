@@ -1,32 +1,21 @@
 import os 
-import sys 
 import json 
 import numpy as np
 import pandas as pd
 import pickle
-import math
 from typing import List, Dict, Any
-from shutil import copyfile
 from pyquaternion import Quaternion
 import argparse
 
-import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
-from PIL import Image
 import colorsys
-
 import cv2
 
 # load nuScenes libraries
 from nuscenes import NuScenes
-from nuscenes.utils.geometry_utils import transform_matrix
-from nuscenes.utils.data_classes import Box, RadarPointCloud
-from nuscenes.utils.splits import create_splits_logs, create_splits_scenes
-from nuscenes.eval.tracking.evaluate import TrackingEval
-from nuscenes.eval.tracking.data_classes import TrackingConfig
+from nuscenes.utils.data_classes import Box
+from nuscenes.utils.splits import create_splits_scenes
 
-# load AN3DMOT model
-from my_libs.my_model import AB3DMOT
+
 
 def load_nusc(split,data_root):
     assert split in ['train','val','test'], "Bad nuScenes version"
@@ -72,22 +61,22 @@ def box_name2color(name):
     if name == 'car':
         c = (255,0,0)       # red
     
-    if name == 'pedestrian':
+    elif name == 'pedestrian':
         c = (0,0,255)       # blue
     
-    if name == 'truck':
+    elif name == 'truck':
         c = (255,255,0)     # yellow
     
-    if name == 'bus':
+    elif name == 'bus':
         c = (255,0,255)     # magenta
     
-    if name == 'bicycle':
+    elif name == 'bicycle':
         c = (0,255,0)       # green
     
-    if name == 'motorcycle':
+    elif name == 'motorcycle':
         c = (192,192,192)   # silver
     
-    if name == 'trailer':
+    elif name == 'trailer':
         c = (165,42,42)     # brown
 
     return c
@@ -109,9 +98,10 @@ def visualization_by_frame(args,box_list,nusc,token):
     image_path = os.path.join(args.data_root,sample_data['filename'])    
     img = cv2.imread(image_path) 
 
-    max_color = 30
+    # max_color = 30
     # colors = random_colors(max_color)       # Generate random colors
     colors = fixed_colors()                   # Using pre-made color list to identify ID
+    max_color = len(colors)
 
     for box in box_list:
         
@@ -130,7 +120,7 @@ def visualization_by_frame(args,box_list,nusc,token):
 
         elif args.color_method =='id':
             ID = box.label
-            color_float = colors[int(ID)-1 % max_color]           # loops back to first color if more than max_color
+            color_float = colors[(int(ID)-1) % max_color]           # loops back to first color if more than max_color
             color_int = tuple([int(tmp * 255) for tmp in color_float])
             c = color_int
 
@@ -138,15 +128,24 @@ def visualization_by_frame(args,box_list,nusc,token):
         if box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
             box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
     
-    while True :
-        # showing the image 
-        cv2.imshow('image', img) 
-          
-        # waiting using waitKey method 
-        if cv2.waitKey(1) == ord("\r"):
-            break
 
-    cv2.destroyAllWindows()
+    cv2.imshow('image', img) 
+
+    key = cv2.waitKeyEx(0)
+
+    if key == 65363 or key == 13:   # right arrow or enter
+        print("next frame:")
+        cv2.destroyAllWindows()
+        return 0
+
+    elif key == 65361:              # left arrow
+        print("previous frame:")
+        cv2.destroyAllWindows()
+        return 1
+
+    elif key == 113:              # q key
+        cv2.destroyAllWindows()
+        exit()
 
 
 def visualization_concatenated(args):
@@ -154,7 +153,7 @@ def visualization_concatenated(args):
     nusc = load_nusc(args.split,args.data_root)
     cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']
 
-    tracking_file = './output/track_output_'+args.detection_method+'/track_results_nusc.json'
+    tracking_file = args.data_dir+'/track_results_nusc.json'
 
     print('Loading data from:',tracking_file)
 
@@ -162,7 +161,12 @@ def visualization_concatenated(args):
 
         track_data = json.load(json_file)
 
-        scenes_list = os.listdir(args.data_dir)
+        # scenes_list = /os.listdir(args.data_dir)
+        split_scenes = create_splits_scenes()
+        scenes_list = split_scenes[args.split]
+        if args.verbose>=2:
+            print('List of scenes :')
+            print(scenes_list)
 
         for scene in nusc.scene:
             scene_name = scene['name']
@@ -195,7 +199,7 @@ def visualization_concatenated(args):
                         box = Box(center = track_sample['translation'],
                                     size = track_sample['size'],
                                     orientation = q,
-                                    label = int(track_sample['tracking_id'][0]),
+                                    label = int(track_sample['tracking_id'].split('_')[0]),
                                     score = float(track_sample['tracking_score']),
                                     velocity = [track_sample['velocity'][0],track_sample['velocity'][1],0],
                                     name = track_sample['tracking_name'],
@@ -206,16 +210,28 @@ def visualization_concatenated(args):
     
                         if args.verbose>=1:
                             print(box)
+                            print(track_sample)
 
-                    visualization_by_frame(args,box_list,nusc,token)
+                    key = visualization_by_frame(args,box_list,nusc,token)
                     
                 if sample_data['next'] == "":
                     #GOTO next scene
                     break
                 else:
-                    #GOTO next sample
-                    sample_token = sample_data['next']
-                    sample_data = nusc.get('sample_data', sample_token)
+                    if key == 0:
+                        #GOTO next sample
+                        sample_token = sample_data['next']
+                        sample_data = nusc.get('sample_data', sample_token)
+
+                    elif key == 1 and sample_data['prev'] != "":
+                        #GOTO prev sample
+                        sample_token = sample_data['prev']
+                        sample_data = nusc.get('sample_data', sample_token)
+
+                    elif key == 1 and sample_data['prev'] == "":
+                        #GOTO same sample
+                        sample_token = sample_token
+                        sample_data = nusc.get('sample_data', sample_token)
 
 def visualization_logs(args):
 
@@ -308,15 +324,15 @@ def create_parser():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root', type=str, default='./data/nuScenes', help='nuScenes data folder')
-    parser.add_argument('--split', type=str, default='train', help='train/val/test')
+    parser.add_argument('--split', type=str, default='val', help='train/val/test')
     parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='train_val/test')
     parser.add_argument('--detection_method','--det', type=str, default='CRN', help='detection method')
-    parser.add_argument('--viz_concat','-c', type=bool, default=True, help='visualize concatenated results')
+    parser.add_argument('--viz_concat','-c', action='store_true', default=False, help='visualize concatenated results')
     parser.add_argument('--color_method',type=str, default='class', help='class/id')
     
     parser.add_argument('--verbose','-v' ,action='count',default=0,help='verbosity level')
 
-    parser.add_argument('--data_dir', type=str, default='./results/logs/'+parser.parse_args().detection_method+'/', help='category-split detection folder')
+    parser.add_argument('--data_dir', type=str, default='./output/CRN_hyper_exp/metrics/iou_2d', help='tracking data folder')
 
     return parser
 
@@ -330,3 +346,7 @@ if __name__ == '__main__':
         visualization_concatenated(args)
     else:
         visualization_logs(args)
+
+
+# launch with :
+# python visualizer.py --sensor CAM_FRONT --color_method class --data_dir output/CRN_hyper_exp/metrics/iou_2d -vvv
