@@ -50,31 +50,36 @@ cd ..
 python setup.py develop  # GPU required
 
 ```
+Make sure your nuscenes devkit is updated to the latest version :
+```shell
+pip install nuscenes-devkit -U
+```
+
 
 ### Data preparation
 **Step 0.** Download [nuScenes dataset](https://www.nuscenes.org/nuscenes#download).
 
 **Step 1.** Symlink the dataset folder to `./data/`.
-```
+```shell
 ln -s ../../../data/nuScenes ./data/
 ```
 
 **Step 2.** Create annotation file. 
 This will generate `nuscenes_infos_{train,val}.pkl`.
-```
+```shell
 python scripts/gen_info.py
 ```
 
 **Step 3.** Generate ground truth depth.  
 *Note: this process requires LiDAR keyframes.*
-```
+```shell
 python scripts/gen_depth_gt.py
 ```
 
 **Step 4.** Generate radar point cloud in perspective view. 
 You can download pre-generated radar point cloud [here](https://kaistackr-my.sharepoint.com/:u:/g/personal/youngseok_kim_kaist_ac_kr/EcEoswDVWu9GpGV5NSwGme4BvIjOm-sGusZdCQRyMdVUtw?e=OpZoQ4).  
 *Note: this process requires radar blobs (in addition to keyframe) to utilize sweeps.*  
-```
+```shell
 python scripts/gen_radar_bev.py  # accumulate sweeps and transform to LiDAR coords
 python scripts/gen_radar_pv.py  # transform to camera coords
 ```
@@ -101,17 +106,17 @@ ExtendedCRN
 
 ### Training and Evaluation
 **Training**
-```
+```shell
 python [EXP_PATH] --amp_backend native -b 4 --gpus 4
 ```
 
 **Evaluation**  
 *Note: use `-b 1 --gpus 1` to measure inference time.*
-```
+```shell
 python [EXP_PATH] --ckpt_path [CKPT_PATH] -e -b 4 --gpus 4
 ```
 *Example using R50* 
-```
+```shell
 python exps/det/CRN_r50_256x704_128x128_4key.py --ckpt_path checkpoint/CRN_r50_256x704_128x128_4key.pth -e -b 1 --gpus 1
 ```
 
@@ -157,7 +162,7 @@ If this work is helpful for your research, please consider citing the following 
 
 ### Data links
 Copy detection ouput to keep a backup and pretty print json file. 
-```
+```shell
 cd /home/ws/Detection
 mkdir detection_output
 cp outputs/det/CRN_r50_256x704_128x128_4key/*.json detection_output
@@ -166,7 +171,7 @@ cd detection_output
 jq . results_nusc.json > pretty_printed_results_nusc.txt
 ```
 In the tracking folder, simlink the data and the detection output to the data folder.
-```
+```shell
 cd /home/ws/Tracking
 mkdir data
 ln -s ../../data/nuScenes ./data/
@@ -203,7 +208,7 @@ ___
 
 AB3DMOT requires the detection data to be separated in different files by object class.<br>
 To do this, run:
-```
+```shell
 python workfile.py --go_sep
 ```
 This should generate a folder named 'cat_detection'. Inside this folder should be one folder per category, inside which you should find one .txt file per scene.<br>
@@ -232,11 +237,11 @@ You can now run the Tracking in different configurations:<br>
 - ```python  workfile.py --gt_track``` will display each frame and add the tracking bounding box, using the ground truth as detection backbone. This is used for debugging purposes.<br>
 
 To generate the nuScenes-formatted results, run:
-```
+```shell
 python workfile.py
 ```
 Finally, to evaluate the output using nuScenes official evauation:
-```
+```shell
 # Create a json output file nammed : 'track_results_nusc.json' in the Tracking/output/track_output_CRN/ directory, containing all the detections and formatted for evaluation.
 python workfile.py --concat	
 
@@ -245,7 +250,7 @@ python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json
 ```
 
 Alternatively, you can use the shell script launcher to run the whole tracking pipeline, including the separation, concatenation, and evaluation:
-```
+```shell
 bash launch.sh
 ```
 
