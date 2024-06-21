@@ -1,9 +1,6 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
-*/__pycache__/
-*/*/__pycache__/
-*/*/*/__pycache__/
-*/*/*/*/__pycache__/
+*__pycache__
+
 
 # Data folder containing nuScenes data
 data*/
@@ -33,4 +30,6 @@ Tracking/output
 Tracking/*.json
 Tracking/results
 Tracking/track_results_pretty_print.txt
+
+*bckp*
 
