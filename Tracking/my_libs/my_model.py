@@ -65,12 +65,12 @@ class AB3DMOT(object):
 		else :
 			if self.det_name == 'CRN':
 				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
-				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'greedy', 'giou_2d', -0.5, 1, 2
+				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.5, 1, 2
 				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
 				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.3, 3, 2
 				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.4, 1, 2
-				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_2d', -0.8, 3, 2
-				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.6, 3, 2
+				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.7, 3, 2
+				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'hungar', 'dist_3d',    6, 3, 2
 				else: assert False, 'cat name error: %s'%(cat)
 			
 			elif self.det_name == 'Radiant':
@@ -399,7 +399,12 @@ class AB3DMOT(object):
 		if len(matched)>0:
 			for d,t in matched:
 				for res in results[0]:
-					if res[9]-1==t : res[14]=affi[d][t]
+					if res[9]-1==t : 
+						res[14]=affi[d][t]
+			
+						if self.metric in ['dist_3d', 'dist_2d', 'm_dis']:
+							res[14]=-res[14]
+
 
 		return results
 
