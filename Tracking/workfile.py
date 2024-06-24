@@ -213,7 +213,7 @@ def get_det_df(cat_detection_root,detection_method,cat,det_file,verbose=False):
             vz = 0
 
             # Correcting box center from bottom center to 3D center
-            z = float(z)+float(h)
+            z = float(z)+float(h)/2
 
             if verbose :
                 print (det)
@@ -1234,8 +1234,8 @@ def create_parser():
     parser.add_argument('--use_vel', action='store_true', dest='use_vel', default=True, help='use radar velocity for prediction')
     parser.add_argument('--no-use_vel', action='store_false', dest='use_vel', default=False, help='use radar velocity for prediction')
 
-    parser.add_argument('--affi_pro', action='store_true', dest='affi_pro', default=True, help='use post-processing affinity')
-    parser.add_argument('--no-affi_pro', action='store_false', dest='affi_pro', default=True, help='do not use post-processing affinity')
+    parser.add_argument('--affi_pro', action='store_true', dest='affi_pro', default=False, help='use post-processing affinity')
+    # parser.add_argument('--no-affi_pro', action='store_false', dest='affi_pro', default=True, help='do not use post-processing affinity')
 
     # Action
     parser.add_argument('--go_sep', action='store_true', default=False, help='separate detections by category (required once)')
