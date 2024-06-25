@@ -25,7 +25,6 @@ Tracking/configs
 Tracking/docs
 Tracking/external
 Tracking/scripts
-Tracking/output
 
 Tracking/*.json
 Tracking/results
