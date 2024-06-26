@@ -139,57 +139,6 @@ def get_det_data(args,det_data,sample_token,label):
             det_box_list.append(box)
     return det_box_list
 
-def get_gt_boxes(nusc,sample_data):
-
-    sensor_list = ['CAM_FRONT', 'CAM_FRONT_RIGHT', 'CAM_BACK', 'CAM_BACK_RIGHT', 'CAM_BACK_LEFT', 'CAM_FRONT_LEFT']
-
-    GT_box_list=[]
-    GT_token_mem=[]
-
-
-    sample_token = sample_data['sample_token']
-    sample = nusc.get('sample',sample_token)
-
-    GT_ID = 0
-
-    for sensor in sensor_list:
-        sample_data = nusc.get('sample_data', sample['data'][sensor])   
-
-        sample_data_token = sample_data['token']
-        _, nusc_box_list,_ = nusc.get_sample_data(sample_data_token = sample_data_token)
-
-
-        sd_record = sample_data
-        cs_record = nusc.get('calibrated_sensor', sd_record['calibrated_sensor_token'])
-        sensor_record = nusc.get('sensor', cs_record['sensor_token'])
-        ego_pose = nusc.get('ego_pose', sd_record['ego_pose_token'])
-        cam_intrinsic = np.array(cs_record['camera_intrinsic'])
-        imsize = (sd_record['width'], sd_record['height'])
-
-        for box in nusc_box_list: 
-            if box.token not in GT_token_mem:  
-                GT_ID+=1
-
-                #  Move box from sensor coord to ego.
-                box.rotate(Quaternion(cs_record['rotation']))
-                box.translate(np.array(cs_record['translation']))
-
-                # Move box from ego vehicle to global.
-                box.rotate(Quaternion(ego_pose['rotation']))
-                box.translate(np.array(ego_pose['translation']))
-                
-                gt_vel = tuple(nusc.box_velocity(box.token))
-                if np.isnan(gt_vel).any():              # In case box_velocity cannot calculate the speed, handle the nan output case
-                    gt_vel = tuple([0,0,0])
-
-                box.velocity = gt_vel
-                box.token = 'GT_'+str(GT_ID)
-                
-                GT_token_mem.append(box.token)
-                GT_box_list.append(box)
-
-    return(GT_box_list)
-
 def visualization_by_frame(args,det_box_list1,det_box_list2,nusc,token):
 
     sample = nusc.get('sample', token)
