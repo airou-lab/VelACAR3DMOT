@@ -1,11 +1,18 @@
+#-----------------------------------------------
+# Author : Mathis Morales                       
+# Email  : mathis-morales@outlook.fr             
+# git    : https://github.com/MathisMM            
+#-----------------------------------------------
+
 import os 
 import json 
 import numpy as np
 import pandas as pd
 import pickle
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from pyquaternion import Quaternion
 import argparse
+import copy
 
 import colorsys
 import cv2
@@ -14,6 +21,9 @@ import cv2
 from nuscenes import NuScenes
 from nuscenes.utils.data_classes import Box
 from nuscenes.utils.splits import create_splits_scenes
+from nuscenes.utils.geometry_utils import view_points, transform_matrix
+
+from libs.box import Box3D
 
 
 
@@ -81,6 +91,79 @@ def box_name2color(name):
 
     return c
 
+def get_bot_box(args,box,ego_pose,cs_record):
+
+    if args.verbose >=3:
+        # -----------------------------Creating a box object with AB3DMOT functions------------------------------
+        box_3d = Box3D(x=box.center[0],
+                        y=box.center[1],
+                        z=box.center[2],
+                        w=box.wlh[0],
+                        h=box.wlh[2],
+                        l=box.wlh[1],
+                        ry=box.orientation.radians
+                        )
+        print()
+        print('nusc box:')
+        print(box)
+        print()
+        print('AB3DMOT box_3d:')
+        print(box_3d)
+        print(200*'_')
+
+        # Proving corners with nusc built-in and AB3DMOT function are equivalent:
+        box_3d_corners = Box3D.box2corners3d_camcoord(box_3d)
+        print('AB3DMOT box_corners:')
+        print(box_3d_corners)   # slight difference due to rotation matrices
+        print()
+        print('nusc box.corners():')
+        print(box.corners().T)
+        print(200*'.')
+
+        # Proving bottom corners with nusc built-in and AB3DMOT function are equivalent:
+        box_3d_bot = box_3d_corners[[2,3,7,6], :3] # taken from dist_metrics.py
+        print('AB3DMOT bottom box corners:')
+        print(box_3d_bot)
+        print()
+        print('nusc bottom box corners:')
+        print(box.bottom_corners().T)
+        print(200*'=')
+
+    # --------------------------Creating bottom_box by projecting box on x,y plane---------------------------
+    bot_box = copy.deepcopy(box)
+    bot_box.center[2]=bot_box.center[2]-bot_box.wlh[2]/2
+    bot_box.wlh[2]=0
+
+    # making sure the boxes are equivalent
+    print('nusc box:')
+    print(box)
+    print()
+    print('projected box on xy plane:')
+    print(bot_box)
+    print(200*'-')
+
+    print('projected box corners')
+    print(bot_box.corners().T)  # showing [0,1,4,5] = [3,2,7,6] (resp) => rectangular box wwith no height
+    print()                 
+    print('projected box bottom corners')
+    print(bot_box.bottom_corners().T) # showing bottom box is equivalent to previous ones
+
+    if args.verbose>=4:
+        input()
+
+
+    # --------------------------------Transforming bottom box to camera coord-------------------------------- 
+
+    # Move box to ego vehicle coord system.
+    bot_box.translate(-np.array(ego_pose['translation']))
+    bot_box.rotate(Quaternion(ego_pose['rotation']).inverse)
+
+    #  Move box to sensor coord system.
+    bot_box.translate(-np.array(cs_record['translation']))
+    bot_box.rotate(Quaternion(cs_record['rotation']).inverse)
+
+    return bot_box
+
 def visualization_by_frame(args,box_list,nusc,token):
 
     sample = nusc.get('sample', token)
@@ -105,7 +188,8 @@ def visualization_by_frame(args,box_list,nusc,token):
 
     for box in box_list:
         
-        # print(box)
+        if args.add_bottom_box:
+            bot_box = get_bot_box(args,box,ego_pose,cs_record)
 
         # Move box to ego vehicle coord system.
         box.translate(-np.array(ego_pose['translation']))
@@ -126,8 +210,13 @@ def visualization_by_frame(args,box_list,nusc,token):
 
         
         if box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
-            box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
-    
+            box.render_box(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+            
+            if args.add_bottom_box: 
+                c=(255,255,255)
+                bot_box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+
+
 
     cv2.imshow('image', img) 
 
@@ -147,8 +236,66 @@ def visualization_by_frame(args,box_list,nusc,token):
         cv2.destroyAllWindows()
         exit()
 
+def render_box(self,im: np.ndarray,view: np.ndarray = np.eye(3),normalize: bool = False,colors: Tuple = ((0, 0, 255), (255, 0, 0), (155, 155, 155)),linewidth: int = 2) -> None:
+    """
+    Renders box using OpenCV2.
+    :param im: <np.array: width, height, 3>. Image array. Channels are in BGR order.
+    :param view: <np.array: 3, 3>. Define a projection if needed (e.g. for drawing projection in an image).
+    :param normalize: Whether to normalize the remaining coordinate.
+    :param colors: ((R, G, B), (R, G, B), (R, G, B)). Colors for front, side & rear.
+    :param linewidth: Linewidth for plot.
+    """
+    corners = view_points(self.corners(), view, normalize=normalize)[:2, :]
 
-def visualization_concatenated(args):
+    def draw_rect(selected_corners, color):
+        prev = selected_corners[-1]
+        for corner in selected_corners:
+            cv2.line(im,
+                     (int(prev[0]), int(prev[1])),
+                     (int(corner[0]), int(corner[1])),
+                     color, linewidth)
+            prev = corner
+
+    # Draw the sides
+    for i in range(4):
+        cv2.line(im,
+                 (int(corners.T[i][0]), int(corners.T[i][1])),
+                 (int(corners.T[i + 4][0]), int(corners.T[i + 4][1])),
+                 colors[2][::-1], linewidth)
+
+    # Draw front (first 4 corners) and rear (last 4 corners) rectangles(3d)/lines(2d)
+    draw_rect(corners.T[:4], colors[0][::-1])
+    draw_rect(corners.T[4:], colors[1][::-1])
+
+    print(self.corners().T)
+    print(corners.T)
+    # exit()
+
+    # Draw line indicating the front
+    center_bottom_forward = np.mean(corners.T[2:4], axis=0)
+    center_bottom = np.mean(corners.T[[2, 3, 7, 6]], axis=0)
+    cv2.line(im,
+             (int(center_bottom[0]), int(center_bottom[1])),
+             (int(center_bottom_forward[0]), int(center_bottom_forward[1])),
+             colors[0][::-1], linewidth)
+
+    h = corners.T[3][1] - corners.T[0][1]
+    l = corners.T[0][0] - corners.T[1][0]
+
+    center = [center_bottom[0]-l/2,center_bottom[1]-h/2]
+
+    cv2.putText(im,
+                str(self.label),
+                org=(int(center[0]), int(center[1])),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=0.5,color=(0, 0, 0),thickness=1,lineType=cv2.LINE_AA
+                )
+
+render_box
+Box.render_box = render_box
+
+
+
+def visualization_json(args):
 
     nusc = load_nusc(args.split,args.data_root)
     cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']
@@ -327,12 +474,14 @@ def create_parser():
     parser.add_argument('--split', type=str, default='val', help='train/val/test')
     parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='train_val/test')
     parser.add_argument('--detection_method','--det', type=str, default='CRN', help='detection method')
-    parser.add_argument('--viz_concat','-c', action='store_true', default=False, help='visualize concatenated results')
+    parser.add_argument('--viz_method', type=str, default='json', help='visualize json_file or logs')
     parser.add_argument('--color_method',type=str, default='class', help='class/id')
     
     parser.add_argument('--verbose','-v' ,action='count',default=0,help='verbosity level')
 
-    parser.add_argument('--data_dir', type=str, default='./output/CRN_hyper_exp/metrics/iou_2d', help='tracking data folder')
+    parser.add_argument('--add_bottom_box', '-b', action='store_true', default=False, help='add bottom bounding box to plot (in white)')
+
+    parser.add_argument('--data_dir', type=str, default='./output/track_output_CRN', help='tracking data folder')
 
     return parser
 
@@ -342,11 +491,18 @@ if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
     
-    if args.viz_concat:        
-        visualization_concatenated(args)
-    else:
+    assert args.viz_method in ['json','logs'], "unknown visualization type"
+    assert args.color_method in ['class','id'], "unknown color method"
+    assert args.split in ['train','val','test'], "wrong split type"
+
+    if args.viz_method == 'json':        
+        visualization_json(args)
+    elif args.viz_method == 'logs':
         visualization_logs(args)
 
 
-# launch with :
-# python visualizer.py --sensor CAM_FRONT --color_method class --data_dir output/CRN_hyper_exp/metrics/iou_2d -vvv
+'''
+launch with :
+python visualizer.py --sensor CAM_FRONT --color_method class --data_dir output/CRN_hyper_exp/metrics/iou_2d -vvv
+python visualizer.py --color_method id --viz_method logs --data_dir results/logs/CRN -b -vvv
+'''
