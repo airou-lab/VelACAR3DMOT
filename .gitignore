@@ -28,6 +28,7 @@ Tracking/scripts
 *plots
 *.json
 Tracking/output/.bin
+Tracking/.my_libs_old/
 
 Tracking/*.json
 Tracking/results
