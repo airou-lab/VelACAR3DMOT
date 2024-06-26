@@ -19,7 +19,6 @@ from nuscenes.eval.common.loaders import (
     load_prediction,
 )
 from nuscenes.eval.tracking.algo import TrackingEvaluation
-# from my_libs.my_nusc_libs.algo import TrackingEvaluation
 from nuscenes.eval.tracking.constants import AVG_METRIC_MAP, MOT_METRIC_MAP, LEGACY_METRICS
 from nuscenes.eval.tracking.data_classes import TrackingMetrics, TrackingMetricDataList, TrackingConfig, TrackingBox, \
     TrackingMetricData
