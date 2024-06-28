@@ -3,37 +3,25 @@
 
 
 # Data folder containing nuScenes data
-data*/
+*data*
 
 # Detection generated folders
 Detection/checkpoint/
-Detection/data/
 Detection/CRN.egg-info/
 Detection/build/
 Detection/outputs/
 Detection/detection_output*
-
 Detection/*.txt
-Detection/*.json
 
 # Tracking generated folders
-Tracking/data
 Tracking/Xinshuo_PyToolbox
 Tracking/LICENSE
-Tracking/AB3DMOT_libs
-Tracking/configs
-Tracking/docs
-Tracking/external
-Tracking/scripts
-*plots
-*.json
-Tracking/output/.bin
-Tracking/.my_libs_old/
 
 Tracking/*.json
 Tracking/results
-Tracking/track_results_pretty_print.txt
-Tracking/weird_output_eval.txt
 
 *bckp*
+*plots
+*.bin
+*.json
 
