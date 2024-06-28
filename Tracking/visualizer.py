@@ -24,72 +24,8 @@ from nuscenes.utils.splits import create_splits_scenes
 from nuscenes.utils.geometry_utils import view_points, transform_matrix
 
 from libs.box import Box3D
+from libs.utils import load_nusc, random_colors, fixed_colors, box_name2color, render_box
 
-
-
-def load_nusc(split,data_root):
-    assert split in ['train','val','test'], "Bad nuScenes version"
-
-    if split in ['train','val']:
-        nusc_version = 'v1.0-trainval'
-    elif split =='test':
-        nusc_version = 'v1.0-test'
-    
-    nusc = NuScenes(version=nusc_version, dataroot=data_root, verbose=True)
-
-    return nusc
-
-def random_colors(N, bright=True):
-    """
-    Generate random colors.
-    To get visually distinct colors, generate them in HSV space then
-    convert to RGB.
-    """
-    brightness = 1.0 if bright else 0.7
-    hsv = [(i / float(N), 1, brightness) for i in range(N)]
-    colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
-    # random.shuffle(colors)
-    return colors
-
-def fixed_colors():
-    f = open('color_scheme.txt')     # rewritting file
-    text = f.readlines()
-    color_name = []
-    color_val_txt = []
-    color_val = []
-    for item in text:
-        color_name.append(item.split(',')[0])
-        color_val_txt.append(item.split('(')[1].split(')')[0])
-    for color in color_val_txt:
-        color_tmp = (float(color.split(',')[0])/255,float(color.split(',')[1])/255,float(color.split(',')[2])/255,)
-        color_val.append(color_tmp)
-
-    f.close()
-    return color_val
-
-def box_name2color(name):
-    if name == 'car':
-        c = (255,0,0)       # red
-    
-    elif name == 'pedestrian':
-        c = (0,0,255)       # blue
-    
-    elif name == 'truck':
-        c = (255,255,0)     # yellow
-    
-    elif name == 'bus':
-        c = (255,0,255)     # magenta
-    
-    elif name == 'bicycle':
-        c = (0,255,0)       # green
-    
-    elif name == 'motorcycle':
-        c = (192,192,192)   # silver
-    
-    elif name == 'trailer':
-        c = (165,42,42)     # brown
-
-    return c
 
 def get_bot_box(args,box,ego_pose,cs_record):
 
@@ -370,15 +306,16 @@ def visualization_json(args):
                         sample_token = sample_data['next']
                         sample_data = nusc.get('sample_data', sample_token)
 
-                    elif key == 1 and sample_data['prev'] != "":
-                        #GOTO prev sample
-                        sample_token = sample_data['prev']
-                        sample_data = nusc.get('sample_data', sample_token)
+                    elif key == 1 :
+                        if sample_data['prev'] != "":
+                            #GOTO prev sample
+                            sample_data_token = sample_data['prev']
 
-                    elif key == 1 and sample_data['prev'] == "":
-                        #GOTO same sample
-                        sample_token = sample_token
-                        sample_data = nusc.get('sample_data', sample_token)
+                        elif sample_data['prev'] == "":
+                            #GOTO same sample
+                            sample_data_token = sample_data_token
+                        
+                        sample_data = nusc.get('sample_data', sample_data_token)
 
 def visualization_logs(args):
 
@@ -491,7 +428,7 @@ if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
     
-    assert args.viz_method in ['json','logs'], "unknown visualization type"
+    assert args.viz_method in ['json','logs'], "unknown visualization method"
     assert args.color_method in ['class','id'], "unknown color method"
     assert args.split in ['train','val','test'], "wrong split type"
 
@@ -505,4 +442,8 @@ if __name__ == '__main__':
 launch with :
 python visualizer.py --sensor CAM_FRONT --color_method class --data_dir output/CRN_hyper_exp/metrics/iou_2d -vvv
 python visualizer.py --color_method id --viz_method logs --data_dir results/logs/CRN -b -vvv
+
+mini :
+python visualizer.py --data_root ./data_mini/nuScenes --data_dir ./output/track_output_CRN_mini \
+                    --color_method id --viz_method json -v
 '''
