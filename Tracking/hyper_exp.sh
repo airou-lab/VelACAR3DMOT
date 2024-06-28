@@ -116,6 +116,7 @@
 #     mv output/track_output_CRN output/CRN_hyper_exp/max_age/$max_age
 # done
 
+python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --go_sep
 
 #-------------------------------------------------------------------------------------------------------------------------------
 # Velocity
@@ -133,7 +134,7 @@ python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json
                 --eval_set val --dataroot ./data/nuScenes 
 
 # saving output
-mv output/track_output_CRN output/CRN_vel_exp/with_vel
+mv output/track_output_CRN output/CRN_vel_exp_v2/with_vel
 
 
 
@@ -149,7 +150,7 @@ python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json
                 --eval_set val --dataroot ./data/nuScenes 
 
 # saving output
-mv output/track_output_CRN output/CRN_vel_exp/without_vel
+mv output/track_output_CRN output/CRN_vel_exp_v2/without_vel
 
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -168,7 +169,7 @@ python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json
                 --eval_set val --dataroot ./data/nuScenes 
 
 # saving output
-mv output/track_output_CRN output/CRN_keyframes_vel_exp/with_vel
+mv output/track_output_CRN output/CRN_vel_exp_v2/with_vel_kf_only
 
 
 
@@ -184,4 +185,4 @@ python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json
                 --eval_set val --dataroot ./data/nuScenes 
 
 # saving output
-mv output/track_output_CRN output/CRN_keyframes_vel_exp/without_vel
+mv output/track_output_CRN output/CRN_vel_exp_v2/without_vel_kf_only
