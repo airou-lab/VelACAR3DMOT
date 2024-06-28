@@ -21,129 +21,12 @@ from nuscenes.utils.data_classes import Box
 from nuscenes.utils.splits import create_splits_scenes
 from nuscenes.utils.geometry_utils import view_points, transform_matrix
 
-
-def load_nusc(split,data_root):
-    assert split in ['train','val','test'], "Bad nuScenes version"
-
-    if split in ['train','val']:
-        nusc_version = 'v1.0-trainval'
-    elif split =='test':
-        nusc_version = 'v1.0-test'
-    
-    nusc = NuScenes(version=nusc_version, dataroot=data_root, verbose=True)
-
-    return nusc
-
-def random_colors(N, bright=True):
-    """
-    Generate random colors.
-    To get visually distinct colors, generate them in HSV space then
-    convert to RGB.
-    """
-    brightness = 1.0 if bright else 0.7
-    hsv = [(i / float(N), 1, brightness) for i in range(N)]
-    colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
-    random.shuffle(colors)
-    return colors
-
-def box_name2color(name):
-    if name == 'car':
-        c = (255,0,0)       # red
-    
-    elif name == 'pedestrian':
-        c = (0,0,255)       # blue
-    
-    elif name == 'truck':
-        c = (255,255,0)     # yellow
-    
-    elif name == 'bus':
-        c = (255,0,255)     # magenta
-    
-    elif name == 'bicycle':
-        c = (0,255,0)       # green
-    
-    elif name == 'motorcycle':
-        c = (192,192,192)   # silver
-    
-    elif name == 'trailer':
-        c = (165,42,42)     # brown
-
-    else :
-        c = (255,255,255)     # brown
-
-    return c
-
-def get_score_thresh_by_cat(cat):
-    if cat == 'car':
-        return 0.4
-    elif cat =='pedestrian':
-        return 0.6
-    elif cat =='truck':
-        return 0.4
-    elif cat =='bus':
-        return 0.2
-    elif cat =='bicycle':
-        return 0.3
-    elif cat =='motorcycle':
-        return 0.3
-    elif cat =='trailer':
-        return 0.1
-    else :
-        return 0.8
-
-def render_box(self, im: np.ndarray, text: str, vshift:int = 0, hshift:int = 0, view: np.ndarray = np.eye(3), normalize: bool = False, colors: Tuple = ((0, 0, 255), (255, 0, 0), (155, 155, 155)), linewidth: int = 2) -> None:
-    """
-    Renders box using OpenCV2.
-    :param im: <np.array: width, height, 3>. Image array. Channels are in BGR order.
-    :param vshift/hshift : int. Add a vertical/horizontal shift to the bbox label
-    :param view: <np.array: 3, 3>. Define a projection if needed (e.g. for drawing projection in an image).
-    :param normalize: Whether to normalize the remaining coordinate.
-    :param colors: ((R, G, B), (R, G, B), (R, G, B)). Colors for front, side & rear.
-    :param linewidth: Linewidth for plot.
-    """
-    corners = view_points(self.corners(), view, normalize=normalize)[:2, :]
-
-    def draw_rect(selected_corners, color):
-        prev = selected_corners[-1]
-        for corner in selected_corners:
-            cv2.line(im,
-                     (int(prev[0]), int(prev[1])),
-                     (int(corner[0]), int(corner[1])),
-                     color, linewidth)
-            prev = corner
-
-    # Draw the sides
-    for i in range(4):
-        cv2.line(im,
-                 (int(corners.T[i][0]), int(corners.T[i][1])),
-                 (int(corners.T[i + 4][0]), int(corners.T[i + 4][1])),
-                 colors[2][::-1], linewidth)
-
-    # Draw front (first 4 corners) and rear (last 4 corners) rectangles(3d)/lines(2d)
-    draw_rect(corners.T[:4], colors[0][::-1])
-    draw_rect(corners.T[4:], colors[1][::-1])
-
-    # Draw line indicating the front
-    center_bottom_forward = np.mean(corners.T[2:4], axis=0)
-    center_bottom = np.mean(corners.T[[2, 3, 7, 6]], axis=0)
-    cv2.line(im,
-             (int(center_bottom[0]), int(center_bottom[1])),
-             (int(center_bottom_forward[0]), int(center_bottom_forward[1])),
-             colors[0][::-1], linewidth)
-
-    h = corners.T[3][1] - corners.T[0][1]
-    # l = corners.T[0][0] - corners.T[1][0]
-
-    center = [center_bottom[0],center_bottom[1]-h/2]
-
-    cv2.putText(im,
-                text,
-                org=(int(center[0])+hshift, int(center[1])+vshift),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=0.5,color=(0, 0, 0),thickness=1,lineType=cv2.LINE_AA
-                )
-
-render_box
+from Tracking.libs.config import score_thresh
+from Tracking.libs.utils import load_nusc, box_name2color, random_colors, render_box
 Box.render_box = render_box
+
+
+
 
 def visualization_by_frame_and_cat(args,box_list,nusc,token,sample_data_token):
 
@@ -347,7 +230,7 @@ def visualization(args):
                         box_list = []
                         
                         for det_sample in det_data['results'][sample_token]:
-                            if det_sample['detection_score'] >= get_score_thresh_by_cat(det_sample['detection_name']):   # Discard low confidence score detection 
+                            if det_sample['detection_score'] >= score_thresh(det_sample['detection_name']):   # Discard low confidence score detection 
 
                                 box = Box(center = det_sample['translation'],
                                             size = det_sample['size'],
@@ -399,7 +282,7 @@ def visualization(args):
 def create_parser():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_root','--nusc_data_root', type=str, default='./data/nuScenes', help='nuScenes data folder path')
+    parser.add_argument('--data_root','--nusc_data_root', type=str, default='./data_mini/nuScenes', help='nuScenes data folder path')
     parser.add_argument('--split', type=str, default='val', help='train/val/test')
     parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='see sensor_list')
 
@@ -418,7 +301,7 @@ def create_parser():
     parser.add_argument('--add_gt','-gt', action='store_true', default=False, help='also display ground truth')
 
 
-    parser.add_argument('--det_data_dir', type=str, default='./Detection/detection_output', help='Detection data folder path')
+    parser.add_argument('--det_data_dir', type=str, default='./Detection/detection_output_mini', help='Detection data folder path')
 
     return parser
 

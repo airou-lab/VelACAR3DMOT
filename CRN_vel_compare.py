@@ -23,113 +23,9 @@ from nuscenes.utils.data_classes import Box
 from nuscenes.utils.splits import create_splits_scenes
 from nuscenes.utils.geometry_utils import view_points, transform_matrix
 
-def load_nusc(split,data_root):
-    assert split in ['train','val','test'], "Bad nuScenes version"
-
-    if split in ['train','val']:
-        nusc_version = 'v1.0-trainval'
-    elif split =='test':
-        nusc_version = 'v1.0-test'
-    
-    nusc = NuScenes(version=nusc_version, dataroot=data_root, verbose=True)
-
-    return nusc
-
-def box_name2color(name):
-    if name == 'car':
-        c = (255,0,0)       # red
-    
-    elif name == 'pedestrian':
-        c = (0,0,255)       # blue
-    
-    elif name == 'truck':
-        c = (255,255,0)     # yellow
-    
-    elif name == 'bus':
-        c = (255,0,255)     # magenta
-    
-    elif name == 'bicycle':
-        c = (0,255,0)       # green
-    
-    elif name == 'motorcycle':
-        c = (192,192,192)   # silver
-    
-    elif name == 'trailer':
-        c = (165,42,42)     # brown
-
-    else :
-        c = (255,255,255)     # brown
-
-    return c
-
-def render_box(self,
-               im: np.ndarray,
-               view: np.ndarray = np.eye(3),
-               normalize: bool = False,
-               colors: Tuple = ((0, 0, 255), (255, 0, 0), (155, 155, 155)),
-               linewidth: int = 2) -> None:
-    """
-    Renders box using OpenCV2.
-    :param im: <np.array: width, height, 3>. Image array. Channels are in BGR order.
-    :param view: <np.array: 3, 3>. Define a projection if needed (e.g. for drawing projection in an image).
-    :param normalize: Whether to normalize the remaining coordinate.
-    :param colors: ((R, G, B), (R, G, B), (R, G, B)). Colors for front, side & rear.
-    :param linewidth: Linewidth for plot.
-    """
-    corners = view_points(self.corners(), view, normalize=normalize)[:2, :]
-
-    def draw_rect(selected_corners, color):
-        prev = selected_corners[-1]
-        for corner in selected_corners:
-            cv2.line(im,
-                     (int(prev[0]), int(prev[1])),
-                     (int(corner[0]), int(corner[1])),
-                     color, linewidth)
-            prev = corner
-
-    # Draw the sides
-    for i in range(4):
-        cv2.line(im,
-                 (int(corners.T[i][0]), int(corners.T[i][1])),
-                 (int(corners.T[i + 4][0]), int(corners.T[i + 4][1])),
-                 colors[2][::-1], linewidth)
-
-    # Draw front (first 4 corners) and rear (last 4 corners) rectangles(3d)/lines(2d)
-    draw_rect(corners.T[:4], colors[0][::-1])
-    draw_rect(corners.T[4:], colors[1][::-1])
-
-    # Draw line indicating the front
-    center_bottom_forward = np.mean(corners.T[2:4], axis=0)
-    center_bottom = np.mean(corners.T[[2, 3, 7, 6]], axis=0)
-    cv2.line(im,
-             (int(center_bottom[0]), int(center_bottom[1])),
-             (int(center_bottom_forward[0]), int(center_bottom_forward[1])),
-             colors[0][::-1], linewidth)
-
-    h = corners.T[3][1] - corners.T[0][1]
-    l = corners.T[0][0] - corners.T[1][0]
-
-    center = [center_bottom[0]-l/2,center_bottom[1]-h/2]
-
-    if 'GT' in self.token:
-        cv2.putText(im,
-                    self.token,
-                    org=(int(center[0]), int(center[1])+10),
-                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=0.5,color=(0, 0, 0),thickness=1,lineType=cv2.LINE_AA
-                    )
-    else:
-        cv2.putText(im,
-                    self.token,
-                    org=(int(center[0]), int(center[1])),
-                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=0.5,color=(0, 0, 0),thickness=1,lineType=cv2.LINE_AA
-                    )
-
-
-
-
-render_box
+from Tracking.libs.config import score_thresh
+from Tracking.libs.utils import load_nusc, box_name2color, render_box
 Box.render_box = render_box
-
 
 def get_gt_boxes(nusc,sample_data):
 
@@ -221,7 +117,7 @@ def visualization_by_frame(args,det_box_list,gt_box_list,nusc,token):
             c = color_int
 
         if box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
-            box.render_box(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+            box.render_box(im=img,text=box.token,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
 
     for box in gt_box_list:
 
@@ -236,7 +132,7 @@ def visualization_by_frame(args,det_box_list,gt_box_list,nusc,token):
         c = (0,0,0)
 
         if box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
-            box.render_box(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+            box.render_box(im=img,text=box.token,vshift=10,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
     
 
     cv2.imshow('image', img) 
@@ -316,7 +212,8 @@ def load_det(args):
                     
                     for det_sample in det_data['results'][sample_token]:
 
-                        if det_sample['detection_score'] >= args.score_thresh:   # Discard low confidence score detection 
+                        if det_sample['detection_score'] >= score_thresh(det_sample['detection_name']):   # Discard low confidence score detection 
+
                             
                             boxID+=1
 
@@ -373,16 +270,15 @@ def load_det(args):
 def create_parser():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_root', type=str, default='./data/nuScenes', help='nuScenes data folder')
+    parser.add_argument('--data_root', type=str, default='./data_mini/nuScenes', help='nuScenes data folder')
     parser.add_argument('--split', type=str, default='val', help='train/val/test')
     parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='train_val/test')
 
-    parser.add_argument('--score_thresh', type=float, default=0.4, help='minimum score threshold')    
     parser.add_argument('--color_method',type=str, default='class', help='class/random')
     
     parser.add_argument('--verbose','-v' ,action='count',default=0,help='verbosity level')
 
-    parser.add_argument('--det_data_dir', type=str, default='./Detection/detection_output', help='detection data folder')
+    parser.add_argument('--det_data_dir', type=str, default='./Detection/detection_output_mini', help='detection data folder')
 
     return parser
 
@@ -398,8 +294,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     assert args.split in ['train','val','test'], 'Unknown split type'
-    assert args.score_thresh >= 0,'Score threshold needs to be a positive number' 
     assert args.sensor in sensor_list,'Unknown sensor selected' 
     assert args.color_method in ['class','random'],'Unknown color_method selected' 
+    assert os.path.exists(args.data_root), 'data root at %s not found'%(args.data_root)
+    assert os.path.exists(args.det_data_dir), 'detection data at %s not found'%(args.det_data_dir)
 
     load_det(args)
