@@ -431,7 +431,7 @@ class AB3DMOT(object):
 		if self.debug_id: print('\nframe is %s' % frame_number)
 	
 		# logging
-		print('\n\n*****************************************\n\nprocessing %s/frame %d' % (scene_name, frame_number))
+		if verbose>=1: print('\n\n*****************************************\n\nprocessing %s/frame %d' % (scene_name, frame_number))
 
 		self.frame_count += 1
 
