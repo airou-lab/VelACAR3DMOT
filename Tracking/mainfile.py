@@ -18,11 +18,6 @@ from shutil import copyfile
 from pyquaternion import Quaternion
 import argparse
 
-import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
-from PIL import Image
-import colorsys
-
 import cv2
 
 # load nuScenes libraries
@@ -34,10 +29,11 @@ from nuscenes.eval.tracking.evaluate import TrackingEval
 from nuscenes.eval.tracking.data_classes import TrackingConfig
 
 # load AN3DMOT model
-from libs.my_model import AB3DMOT
+from libs.model import AB3DMOT
 from libs.utils import *
 from libs.config import *
 
+from exp import *
 
 ############################################################################################################################################################################
 # Pipeline
@@ -145,16 +141,20 @@ def initialize_tracker(args, cat, ID_start, nusc, det_file):
 def tracking(args,cat_list,nusc):
     for cat in cat_list:        
 
-        print("category: ",cat)
+        print('category list:',cat_list)
+        print('current category:',cat)
 
         if args.gt_track:
             det_file_list = ['scene-0103.txt','scene-0553.txt','scene-0796.txt','scene-0916.txt']
         else:
             det_file_list=get_scenes_list(os.path.join(args.cat_detection_root,args.detection_method+'_'+cat))
 
+        progress_cnt = 0
+        progress_tot = len(det_file_list)
+
 
         for det_file in det_file_list:
-            
+
             # Computation time for this file
             comp_time_start = time.time()
             
@@ -174,8 +174,11 @@ def tracking(args,cat_list,nusc):
 
             if args.verbose>=3:
                 print ('initial trackers :',tracker.trackers)
-            
+
+            progress_cnt+=1
             print ('scene :',scene['name'])
+            print ('Scene %d/%d'%(progress_cnt,progress_tot))
+
 
             if args.verbose>=2:
                 print (scene)
@@ -196,7 +199,7 @@ def tracking(args,cat_list,nusc):
 
             while(True):
 
-                print ('t =',t)
+                if args.verbose >= 1: print ('t =',t)
 
                 if args.keyframes_only == True and sample_data['is_key_frame'] == False:
                     if sample_data['next'] == "":
@@ -310,13 +313,13 @@ def tracking(args,cat_list,nusc):
                                             cam_intrinsic=cam_intrinsic,
                                             ego_pose=ego_pose,
                                             det_df=det_df,
-                                            score_thresh=args.score_thresh if args.score_thresh>0 else score_thresh(cat),
+                                            score_thresh=args.score_thresh if args.score_thresh>0 else get_score_thresh(args,cat),
                                             t=t
                                             )
 
                 if sample_data['next'] == "":
                     #GOTO next scene
-                    print("no next data")
+                    if args.verbose >= 1 : print("no next data")
                     comp_time_end = time.time() - comp_time_start
                     comp_time_by_det = divmod(comp_time_end,60)                    
                     print('handled %d frames in %d m %.2f s'%(t,comp_time_by_det[0],comp_time_by_det[1]))
@@ -342,7 +345,7 @@ def tracking(args,cat_list,nusc):
                     t+=1
 
             # Logging results for this scene
-            log_results(args,results_df,cat,scene['name'],args.detection_method)
+            log_track_results_at_t(args,results_df,cat,scene['name'],args.detection_method)
 
 def tracking_visualization(args,nusc,data_root,sample_data,results,cs_record,cam_intrinsic,ego_pose,det_df,score_thresh,t):
 
@@ -506,26 +509,27 @@ def create_parser():
     # nuScenes loading
     parser.add_argument('--data_root', type=str, default='./data/nuScenes', help='nuScenes data folder')
     parser.add_argument('--split', type=str, default='train', help='train/val/test')
-    parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='sensor type (see sensor_list)')
+    parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='Sensor type (see sensor_list)')
+    parser.add_argument('--keyframes_only', action='store_true', default=False, help='Only use keyframes (no sweeps, 2Hz instead of 12)') 
 
     # Detection config
-    parser.add_argument('--detection_method', type=str, default='CRN', help='detection method')
+    parser.add_argument('--detection_method', type=str, default='CRN', help='Detection method')
     parser.add_argument('--score_thresh', type=float, default=-1, help='Force a global minimum detection score')
-    parser.add_argument('--cat_detection_root', type=str, default='./data/cat_detection/', help='category-splitted detection folder')
+    parser.add_argument('--cat_detection_root', type=str, default='./data/cat_detection/', help='Category-split detection folder')
     parser.add_argument('--detection_root', type=str, default='./data/detection_output/', help='Softlink to detection output folder')
 
     # Tracking config
-    parser.add_argument('--use_vel', action='store_true', dest='use_vel', default=True, help='use radar velocity for prediction')
+    parser.add_argument('--use_vel', action='store_true', dest='use_vel', default=True, help='Use radar velocity for prediction')
     parser.add_argument('--no-use_vel', action='store_false', dest='use_vel', default=False, help='Turn off radar velocity for prediction, \
                                                                                                     velocity will be estimated by Kalman filter')
 
-    parser.add_argument('--affi_pro', action='store_true', dest='affi_pro', default=False, help='use post-processing affinity')
+    parser.add_argument('--affi_pro', action='store_true', dest='affi_pro', default=False, help='Use post-processing affinity in model.py')
 
     # Actions
-    parser.add_argument('--go_sep', action='store_true', default=False, help='separate detections by category (required once)')
-    parser.add_argument('--gt_track', action='store_true', default=False, help='tracking using ground thruth instead of detections (debug)')
+    parser.add_argument('--go_sep', action='store_true', default=False, help='Separate detections by category (required once)')
+    parser.add_argument('--gt_track', action='store_true', default=False, help='Tracking using ground thruth instead of detections (debug)')
     parser.add_argument('--log_viz', action='store_true', default=False, help='Logging tracking visualization (saving .png files) directly instead of displaying')
-    parser.add_argument('--viz', action='store_true', default=False, help='display tracking visualization (superseeded by log_viz)')
+    parser.add_argument('--viz', action='store_true', default=False, help='Display tracking visualization (superseeded by log_viz)')
     parser.add_argument('--concat', action='store_true', default=False, help='Concatenate results for evaluation')
 
     # debug and display
@@ -540,8 +544,9 @@ def create_parser():
     parser.add_argument('--thresh', type=float, default=None, help='distance treshold, bounds depend on metric') 
     parser.add_argument('--min_hits', type=int, default=None, help='min hits') 
     parser.add_argument('--max_age', type=int, default=None, help='max memory in frames') 
-    
-    parser.add_argument('--keyframes_only', action='store_true', default=False, help='only use keyframes (no sweeps, 2Hz instead of 12)') 
+    parser.add_argument('--cat', type=str, default=None, help='define a single category to compute') 
+
+    parser.add_argument('--exp',action='store_true', default=False, help='Run experiment from exp.py')
 
 
     return parser
@@ -572,20 +577,34 @@ def check_args(args):
     assert os.path.exists(args.detection_root), 'Detection folder at %s not found'%(args.detection_root)
     assert os.path.exists(args.detection_root+'/results_nusc.json'), 'Missing json detection file at %s'%(args.detection_root)
 
+    print(args)
+
 
 if __name__ == '__main__':
-
-    # cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'construction_vehicle', 'motorcycle', 'trailer']
-    cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']
 
     # Argument parser
     parser = create_parser()
     args = parser.parse_args()
     check_args(args)
 
+
+    if args.cat != None:            # mostly for debug and exps
+        cat_list = [args.cat]
+
+    else :
+        # cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'construction_vehicle', 'motorcycle', 'trailer'] # detection list of vehicles 
+        cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']    # AB3DMOT-supported tracking
+
+    # Launch experiment loop from exp.py
+    if args.exp:
+        exp_jobs_handler(args)
+        exit()
+
+
+
+    # --------------------------------CR3DMOT-------------------------------- #
     # Loading scenes
     nusc = load_nusc(args.split,args.data_root)
-
 
     # Separation of all detections by their categories and scenes (required first step)
     if args.go_sep:
@@ -593,7 +612,7 @@ if __name__ == '__main__':
                                     cat_list=cat_list,
                                     nusc=nusc
                                     )
-        exit(1)
+        exit(0)
 
     # Concatenating all tracking files into one json formatted for nuScenes evaluation
     if args.concat:
@@ -605,9 +624,11 @@ if __name__ == '__main__':
         exit(2)
 
     # Tracking pipeline
+    log_args(args)
+
     tracking(args,
             cat_list=cat_list,
             nusc=nusc
             )
 
-    exit(0)
+    exit(1)
