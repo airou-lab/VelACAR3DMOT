@@ -22,7 +22,7 @@ from nuscenes import NuScenes
 from nuscenes.utils.data_classes import Box
 from nuscenes.utils.geometry_utils import view_points, transform_matrix
 
-from .config import score_thresh
+from .config import get_score_thresh
 
 
 global sampling_freq
@@ -34,7 +34,6 @@ def mkdir_if_missing(path):
     if not os.path.isdir(path):
         os.mkdir(path)
         print("created directory at:",path)
-
 
 # nuScenes functions utils
 def load_nusc(split,data_root):
@@ -257,7 +256,7 @@ def get_det_df(args,cat,det_file):
         if args.score_thresh>0:
             score_thresh = args.score_thresh #Forced global score threshold
         else :
-            score_thresh=score_thresh(cat)
+            score_thresh=get_score_thresh(args,cat)
 
 
         for det in f:
@@ -452,7 +451,7 @@ def box_name2color(name):
 
 
 # Results handling
-def log_results(args,results_df,cat,scene_name,detection_method):
+def log_track_results_at_t(args,results_df,cat,scene_name,detection_method):
     '''
     results logged at results/logs/<detection_method>/<scene>/<cat>.pkl
     '''
@@ -482,11 +481,12 @@ def log_results(args,results_df,cat,scene_name,detection_method):
 
 def concat_results(args,data_dir,cat_list,nusc):
     '''
-    data fetched at results/logs/<detection_method>/<scene>/<cat>.pkl
+    cat_list: list of used categories for this run
+    data_dir : output folder of logged track output. Data fetched at data_dir/<scene>/<cat>.pkl
     output at output/track_output_<detection_method>/track_results_nusc.json
     '''
-    cnt = 0
-    cnt_tot = 0
+    # cnt = 0
+    # cnt_tot = 0
     meta_dict = {"use_camera": True,
         "use_lidar": False,
         "use_radar": True,
@@ -524,8 +524,8 @@ def concat_results(args,data_dir,cat_list,nusc):
 
         scene_df = scene_df.reset_index(drop=True)
 
-        cnt += len(scene_df.loc[scene_df['object']=='car'])
-        cnt_tot += len(scene_df)
+        # cnt += len(scene_df.loc[scene_df['object']=='car'])
+        # cnt_tot += len(scene_df)
 
         # Parsing scene token. Using nuscenes loop to go through all the tokens even if no detections
         first_token = scene['first_sample_token']
@@ -535,13 +535,13 @@ def concat_results(args,data_dir,cat_list,nusc):
 
         while(True):
 
-            token = sample_data['sample_token']
+            sample_data_token = sample_data['sample_token']
 
             if sample_data['is_key_frame'] == True:
         
                 sample_result_list = []
                 
-                df_by_token = scene_df.loc[scene_df['token']==token]
+                df_by_token = scene_df.loc[scene_df['token']==sample_data_token]
 
                 for i in range(len(df_by_token)):
                     sample_df = df_by_token.iloc[i]
@@ -564,7 +564,7 @@ def concat_results(args,data_dir,cat_list,nusc):
                     if sample_df['object'] == 'trailer':
                         trk_id += '_7'
 
-                    sample_result={'sample_token':token,
+                    sample_result={'sample_token':sample_data_token,
                                     'translation': [sample_df['x'],sample_df['y'],sample_df['z']],
                                     'size': [sample_df['w'],sample_df['l'],sample_df['h']],
                                     'rotation': [sample_df['r1'],sample_df['r2'],sample_df['r3'],sample_df['r4']],
@@ -576,15 +576,15 @@ def concat_results(args,data_dir,cat_list,nusc):
 
                     sample_result_list.append(sample_result)
 
-                results_dict[token] = sample_result_list
+                results_dict[sample_data_token] = sample_result_list
 
             if sample_data['next'] == "":
                 #GOTO next scene
                 break
             else:
                 #GOTO next sample
-                sample_token = sample_data['next']
-                sample_data = nusc.get('sample_data', sample_token)
+                sample_data_token = sample_data['next']
+                sample_data = nusc.get('sample_data', sample_data_token)
 
     output_dict={'meta':meta_dict, 'results':results_dict}
 
@@ -603,3 +603,16 @@ def concat_results(args,data_dir,cat_list,nusc):
     print('Done.')
 
 
+def log_args(args):
+    output_dir = os.path.join('output','track_output_'+args.detection_method)
+
+    mkdir_if_missing('output')
+
+    mkdir_if_missing(output_dir)
+
+    print('writing arguments to shell_output.txt file.')
+    with open(output_dir+'/shell_output.txt', 'w') as f:
+        f.write('Arguments :\n')
+        f.write(str(args))
+        f.write(3*'\n')
+    print('Done')
