@@ -6,20 +6,22 @@
 
 
 # nuScenes detection score threshold for each category:
-def score_thresh(cat):
-    if cat == 'car':
-        return 0.4
-    elif cat =='pedestrian':
-        return 0.6
-    elif cat =='truck':
-        return 0.4
-    elif cat =='bus':
-        return 0.2
-    elif cat =='bicycle':
-        return 0.3
-    elif cat =='motorcycle':
-        return 0.3
-    elif cat =='trailer':
-        return 0.1
-    else : 
-        return 0.8  # high filter for false negative, wrong names, and untracked objects 
+def get_score_thresh(args,cat):
+
+    if args.detection_method == 'CRN':
+        if cat == 'car':
+            return 0.312
+        elif cat =='pedestrian':
+            return 0.639
+        elif cat =='truck':
+            return 0.452
+        elif cat =='bus':
+            return 0.172
+        elif cat =='bicycle':
+            return 0.210
+        elif cat =='motorcycle':
+            return 0.217
+        elif cat =='trailer':
+            return 0.033
+        else : 
+            return 0.999  # high filter for false positives, wrong names, and untracked objects 
