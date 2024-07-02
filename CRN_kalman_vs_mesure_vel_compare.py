@@ -23,7 +23,7 @@ from nuscenes.utils.data_classes import Box
 from nuscenes.utils.splits import create_splits_scenes
 from nuscenes.utils.geometry_utils import view_points, transform_matrix
 
-from Tracking.libs.config import score_thresh
+from Tracking.libs.config import *
 from Tracking.libs.utils import box_name2color, load_nusc, render_box
 Box.render_box = render_box
 
@@ -36,7 +36,7 @@ def get_det_data(args,det_data,sample_token,label):
 
     for det_sample in det_data['results'][sample_token]:
 
-        if float(det_sample['detection_score']) >= score_thresh((track_sample['tracking_name']).split('.')[1]):   # Discard low confidence score detection 
+        if float(det_sample['detection_score']) >= get_score_thresh(args,(track_sample['tracking_name']).split('.')[1]):   # Discard low confidence score detection 
             
             boxID+=1
 
@@ -60,7 +60,7 @@ def get_track_data(args,track_data,sample_token,label):
     for track_sample in track_data['results'][sample_token]:
         print(track_sample)
 
-        if float(track_sample['tracking_score']) >= score_thresh(track_sample['tracking_name']):   # Discard low confidence score detection 
+        if float(track_sample['tracking_score']) >= get_score_thresh(args,track_sample['tracking_name']):   # Discard low confidence score detection 
 
             boxID+=1
 

@@ -23,7 +23,7 @@ from nuscenes.utils.data_classes import Box
 from nuscenes.utils.splits import create_splits_scenes
 from nuscenes.utils.geometry_utils import view_points, transform_matrix
 
-from Tracking.libs.config import score_thresh
+from Tracking.libs.config import *
 from Tracking.libs.utils import load_nusc, box_name2color, render_box
 Box.render_box = render_box
 
@@ -212,7 +212,7 @@ def load_det(args):
                     
                     for det_sample in det_data['results'][sample_token]:
 
-                        if det_sample['detection_score'] >= score_thresh(det_sample['detection_name']):   # Discard low confidence score detection 
+                        if det_sample['detection_score'] >= get_score_thresh(det_sample['detection_name']):   # Discard low confidence score detection 
 
                             
                             boxID+=1
