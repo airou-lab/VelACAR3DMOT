@@ -1,0 +1,4 @@
+Arguments :
+Namespace(affi_pro=False, cat=None, cat_detection_root='./data_mini/cat_detection/', concat=False, data_root='./data_mini/nuScenes', debug=False, detection_method='CRN', detection_root='./data_mini/detection_output/', exp=False, go_sep=False, gt_track=False, keyframes_only=True, log_viz=False, max_age=None, metric='giou_3d', min_hits=None, run_hyper_exp=False, score_thresh=-1, sensor='CAM_FRONT', split='val', thresh=None, use_R=True, use_vel=False, verbose=0, viz=False)
+
+
