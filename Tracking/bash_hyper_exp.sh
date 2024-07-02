@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # data separation (only done once)
-# python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --go_sep
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --go_sep
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --go_sep
 
 
 
@@ -15,24 +16,24 @@
 #     if [[ $metric == dist_3d ]] || [[ $metric == dist_2d ]] || [[ $metric == m_dis ]]; then
 
 #         # CR3DMOT tracking pipeline
-#         python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
+#         python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
 #                             --run_hyper_exp --metric $metric --thresh 1
 
 #     elif [[ $metric == iou_2d ]] || [[ $metric == iou_3d ]]; then
 
 #         # CR3DMOT tracking pipeline
-#         python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
+#         python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
 #                             --run_hyper_exp --metric $metric --thresh 0.2
 
 #     else    # giou 2d and 3d
 
 #         # CR3DMOT tracking pipeline
-#         python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
+#         python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
 #                             --run_hyper_exp --metric $metric --thresh -0.8
 #     fi
     
 #     # concatenating results into formatted json
-#     python workfile.py --concat
+#     python mainfile.py --concat
 
 #     # nuscenes official evaluation file
 #     python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -50,11 +51,11 @@
 # for thresh in -0.3 -0.4 -0.5 -0.6 -0.7 -0.8;
 # do
 #     # CR3DMOT tracking pipeline
-#     python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
+#     python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
 #                         --run_hyper_exp --thresh $thresh
     
 #     # concatenating results into formatted json
-#     python workfile.py --concat
+#     python mainfile.py --concat
 
 #     # nuscenes official evaluation file
 #     python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -68,11 +69,11 @@
 # for thresh in 2 4 6 8 10;
 # do
 #     # CR3DMOT tracking pipeline
-#     python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
+#     python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
 #                         --run_hyper_exp --thresh $thresh
     
 #     # concatenating results into formatted json
-#     python workfile.py --concat
+#     python mainfile.py --concat
 
 #     # nuscenes official evaluation file
 #     python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -85,11 +86,11 @@
 # for min_hit in 1 2 3;
 # do
 #     # CR3DMOT tracking pipeline
-#     python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
+#     python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
 #                         --run_hyper_exp --min_hit $min_hit
     
 #     # concatenating results into formatted json
-#     python workfile.py --concat
+#     python mainfile.py --concat
 
 #     # nuscenes official evaluation file
 #     python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -102,11 +103,11 @@
 # for max_age in 2 4;
 # do
 #     # CR3DMOT tracking pipeline
-#     python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
+#     python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ \
 #                         --run_hyper_exp --max_age $max_age
     
 #     # concatenating results into formatted json
-#     python workfile.py --concat
+#     python mainfile.py --concat
 
 #     # nuscenes official evaluation file
 #     python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -116,73 +117,132 @@
 #     mv output/track_output_CRN output/CRN_hyper_exp/max_age/$max_age
 # done
 
-python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --go_sep
 
 #-------------------------------------------------------------------------------------------------------------------------------
 # Velocity
 #-------------------------------------------------------------------------------------------------------------------------------
 
-# With velocity
-# CR3DMOT tracking pipeline
-python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val
+# # With velocity
+# # CR3DMOT tracking pipeline
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val
 
-# concatenating results into formatted json
-python workfile.py --concat
+# # concatenating results into formatted json
+# python mainfile.py --concat
 
-# nuscenes official evaluation file
-python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
-                --eval_set val --dataroot ./data/nuScenes 
+# # nuscenes official evaluation file
+# python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
+#                 --eval_set val --dataroot ./data/nuScenes 
 
-# saving output
-mv output/track_output_CRN output/CRN_vel_exp_v2/with_vel
+# # saving output
+# mv output/track_output_CRN output/CRN_vel_exp_v2/with_vel
 
 
 
-# Without velocity
-# CR3DMOT tracking pipeline
-python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --no-use_vel
+# # Without velocity
+# # CR3DMOT tracking pipeline
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --no-use_vel
 
-# concatenating results into formatted json
-python workfile.py --concat
+# # concatenating results into formatted json
+# python mainfile.py --concat
 
-# nuscenes official evaluation file
-python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
-                --eval_set val --dataroot ./data/nuScenes 
+# # nuscenes official evaluation file
+# python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
+#                 --eval_set val --dataroot ./data/nuScenes 
 
-# saving output
-mv output/track_output_CRN output/CRN_vel_exp_v2/without_vel
+# # saving output
+# mv output/track_output_CRN output/CRN_vel_exp_v2/without_vel
 
 
 #-------------------------------------------------------------------------------------------------------------------------------
 # Velocity keyframes
 #-------------------------------------------------------------------------------------------------------------------------------
 
-# With velocity
+# # With velocity
+# # CR3DMOT tracking pipeline
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --keyframes_only
+
+# # concatenating results into formatted json
+# python mainfile.py --concat
+
+# # nuscenes official evaluation file
+# python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
+#                 --eval_set val --dataroot ./data/nuScenes 
+
+# # saving output
+# mv output/track_output_CRN output/CRN_vel_exp_v2/with_vel_kf_only
+
+
+
+# # Without velocity
+# # CR3DMOT tracking pipeline
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --no-use_vel --keyframes_only
+
+# # concatenating results into formatted json
+# python mainfile.py --concat
+
+# # nuscenes official evaluation file
+# python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
+#                 --eval_set val --dataroot ./data/nuScenes 
+
+# # saving output
+# mv output/track_output_CRN output/CRN_vel_exp_v2/without_vel_kf_only
+
+
+
+# With velocity and R matrix
 # CR3DMOT tracking pipeline
-python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --keyframes_only
+python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --keyframes_only --use_R
 
 # concatenating results into formatted json
-python workfile.py --concat
+python mainfile.py --concat
 
 # nuscenes official evaluation file
 python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
                 --eval_set val --dataroot ./data/nuScenes 
 
 # saving output
-mv output/track_output_CRN output/CRN_vel_exp_v2/with_vel_kf_only
+mv output/track_output_CRN output/CRN_R_exp/kf_R_with_vel
 
-
-
-# Without velocity
+# Without velocity and R matrix
 # CR3DMOT tracking pipeline
-python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --no-use_vel --keyframes_only
+python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --no-use_vel --keyframes_only --use_R
 
 # concatenating results into formatted json
-python workfile.py --concat
+python mainfile.py --concat
 
 # nuscenes official evaluation file
 python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
                 --eval_set val --dataroot ./data/nuScenes 
 
 # saving output
-mv output/track_output_CRN output/CRN_vel_exp_v2/without_vel_kf_only
+mv output/track_output_CRN output/CRN_R_exp/kf_R_without_vel
+
+
+
+# With velocity and without R matrix
+# CR3DMOT tracking pipeline
+python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --keyframes_only
+
+# concatenating results into formatted json
+python mainfile.py --concat
+
+# nuscenes official evaluation file
+python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
+                --eval_set val --dataroot ./data/nuScenes 
+
+# saving output
+mv output/track_output_CRN output/CRN_R_exp/kf_no_R_with_vel
+
+# Without velocity and without R matrix
+# CR3DMOT tracking pipeline
+python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --no-use_vel --keyframes_only
+
+# concatenating results into formatted json
+python mainfile.py --concat
+
+# nuscenes official evaluation file
+python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
+                --eval_set val --dataroot ./data/nuScenes 
+
+# saving output
+mv output/track_output_CRN output/CRN_R_exp/kf_no_R_without_vel

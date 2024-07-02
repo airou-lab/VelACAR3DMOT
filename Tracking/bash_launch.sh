@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Backbone detection separation 
-# python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --go_sep
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --go_sep
 
 # # CR3DMOT tracking pipeline
-# python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --affi_pro
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --affi_pro
 
 # # concatenating results into formatted json
-# python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --concat
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --concat
 
 # # nuscenes official evaluation file
 # python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -18,13 +18,13 @@
 
 
 # Backbone detection separation 
-# python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --go_sep
+# python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --go_sep
 
 # CR3DMOT tracking pipeline
-python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/
+python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/
 
 # concatenating results into formatted json
-python workfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --concat
+python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --concat
 
 # nuscenes official evaluation file
 python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
