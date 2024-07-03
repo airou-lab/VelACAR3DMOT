@@ -194,7 +194,7 @@
 python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --keyframes_only --use_R
 
 # concatenating results into formatted json
-python mainfile.py --concat
+# python mainfile.py --concat
 
 # nuscenes official evaluation file
 python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -208,7 +208,7 @@ mv output/track_output_CRN output/CRN_R_exp/kf_R_with_vel
 python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --no-use_vel --keyframes_only --use_R
 
 # concatenating results into formatted json
-python mainfile.py --concat
+# python mainfile.py --concat
 
 # nuscenes official evaluation file
 python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -224,7 +224,7 @@ mv output/track_output_CRN output/CRN_R_exp/kf_R_without_vel
 python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --keyframes_only
 
 # concatenating results into formatted json
-python mainfile.py --concat
+# python mainfile.py --concat
 
 # nuscenes official evaluation file
 python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
@@ -238,7 +238,7 @@ mv output/track_output_CRN output/CRN_R_exp/kf_no_R_with_vel
 python mainfile.py --data_root ./data/nuScenes --cat_detection_root ./data/cat_detection/ --split val --no-use_vel --keyframes_only
 
 # concatenating results into formatted json
-python mainfile.py --concat
+# python mainfile.py --concat
 
 # nuscenes official evaluation file
 python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ \
