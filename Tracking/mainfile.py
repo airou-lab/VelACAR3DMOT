@@ -631,4 +631,10 @@ if __name__ == '__main__':
             nusc=nusc
             )
 
+    concat_results(args,
+                    data_dir='./results/logs/'+args.detection_method+'_mini' if 'mini' in args.data_root  else './results/logs/'+args.detection_method,
+                    cat_list=cat_list,
+                    nusc=nusc
+                    )
+
     exit(1)
