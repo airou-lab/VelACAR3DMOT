@@ -606,6 +606,10 @@ def concat_results(args,data_dir,cat_list,nusc):
 def log_args(args):
     output_dir = os.path.join('output','track_output_'+args.detection_method)
 
+    if 'mini' in args.data_root: # mini dataset
+        output_dir+= '_mini'
+
+
     mkdir_if_missing('output')
 
     mkdir_if_missing(output_dir)
