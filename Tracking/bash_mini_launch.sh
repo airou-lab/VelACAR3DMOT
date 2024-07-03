@@ -13,20 +13,21 @@ python mainfile.py --data_root ./data_mini/nuScenes --cat_detection_root ./data_
 python evaluate.py --result_path output/track_output_CRN_mini/track_results_nusc.json --output_dir output/track_output_CRN_mini/ \
                     --eval_set val --dataroot ./data_mini/nuScenes 
 
-mv output/track_output_CRN_mini/ output/exp_mini_v2/global_test_R_kf_thresh_vel
+mv output/track_output_CRN_mini/ output/exp_mini_v2/global_test_R_kf_thresh_vel_exp2
+
 
 
 # CR3DMOT tracking pipeline
-python mainfile.py --data_root ./data_mini/nuScenes --cat_detection_root ./data_mini/cat_detection/ --split mini_val --keyframes_only --use_R --no-use_vel
+# python mainfile.py --data_root ./data_mini/nuScenes --cat_detection_root ./data_mini/cat_detection/ --split mini_val --keyframes_only --use_R --no-use_vel
 
-# concatenating results into formatted json
-python mainfile.py --data_root ./data_mini/nuScenes --cat_detection_root ./data_mini/cat_detection/  --split mini_val --concat
+# # concatenating results into formatted json
+# python mainfile.py --data_root ./data_mini/nuScenes --cat_detection_root ./data_mini/cat_detection/  --split mini_val --concat
 
-# nuscenes official evaluation file
-python evaluate.py --result_path output/track_output_CRN_mini/track_results_nusc.json --output_dir output/track_output_CRN_mini/ \
-                    --eval_set val --dataroot ./data_mini/nuScenes 
+# # nuscenes official evaluation file
+# python evaluate.py --result_path output/track_output_CRN_mini/track_results_nusc.json --output_dir output/track_output_CRN_mini/ \
+#                     --eval_set val --dataroot ./data_mini/nuScenes 
 
-mv output/track_output_CRN_mini/ output/exp_mini_v2/global_test_R_kf_thresh_no_vel
+# mv output/track_output_CRN_mini/ output/exp_mini_v2/global_test_R_kf_thresh_no_vel
 
 
 
