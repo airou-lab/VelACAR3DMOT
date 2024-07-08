@@ -1,0 +1,244 @@
+{
+  "label_metrics": {
+    "amota": {
+      "bicycle": 0.1898569023569024,
+      "bus": 0.7232349337500817,
+      "car": 0.6189507449817776,
+      "motorcycle": 0.4239759784461111,
+      "pedestrian": 0.3994285387656114,
+      "trailer": 0.3750369458128079,
+      "truck": 0.3261891793754539
+    },
+    "amotp": {
+      "bicycle": 0.9586968464154049,
+      "bus": 0.9753371480914925,
+      "car": 0.8488919343441325,
+      "motorcycle": 1.3269424898128257,
+      "pedestrian": 1.3576232534906847,
+      "trailer": 1.7775858395452317,
+      "truck": 1.4011435348147463
+    },
+    "recall": {
+      "bicycle": 0.27586206896551724,
+      "bus": 0.813953488372093,
+      "car": 0.7075851960425064,
+      "motorcycle": 0.592436974789916,
+      "pedestrian": 0.6040816326530613,
+      "trailer": 0.7560975609756098,
+      "truck": 0.480225988700565
+    },
+    "motar": {
+      "bicycle": 0.8125,
+      "bus": 0.9,
+      "car": 0.8602035350830208,
+      "motorcycle": 0.7651515151515151,
+      "pedestrian": 0.689295039164491,
+      "trailer": 0.5666666666666667,
+      "truck": 0.8765432098765432
+    },
+    "gt": {
+      "bicycle": 58.0,
+      "bus": 86.0,
+      "car": 2729.0,
+      "motorcycle": 238.0,
+      "pedestrian": 1470.0,
+      "trailer": 41.0,
+      "truck": 177.0
+    },
+    "mota": {
+      "bicycle": 0.22413793103448276,
+      "bus": 0.7325581395348837,
+      "car": 0.5884939538292415,
+      "motorcycle": 0.4243697478991597,
+      "pedestrian": 0.35918367346938773,
+      "trailer": 0.41463414634146345,
+      "truck": 0.4011299435028248
+    },
+    "motp": {
+      "bicycle": 0.7034886669219488,
+      "bus": 0.7708580642166684,
+      "car": 0.40759036389835973,
+      "motorcycle": 0.7485595477398719,
+      "pedestrian": 0.6581596369927519,
+      "trailer": 1.7062015856179387,
+      "truck": 0.49370026241208975
+    },
+    "mt": {
+      "bicycle": 1.0,
+      "bus": 3.0,
+      "car": 73.0,
+      "motorcycle": 3.0,
+      "pedestrian": 20.0,
+      "trailer": 0.0,
+      "truck": 1.0
+    },
+    "ml": {
+      "bicycle": 5.0,
+      "bus": 0.0,
+      "car": 36.0,
+      "motorcycle": 3.0,
+      "pedestrian": 25.0,
+      "trailer": 0.0,
+      "truck": 4.0
+    },
+    "faf": {
+      "bicycle": 7.894736842105263,
+      "bus": 10.9375,
+      "car": 161.11111111111111,
+      "motorcycle": 49.2063492063492,
+      "pedestrian": 183.07692307692307,
+      "trailer": 31.70731707317073,
+      "truck": 8.47457627118644
+    },
+    "tp": {
+      "bicycle": 16.0,
+      "bus": 70.0,
+      "car": 1867.0,
+      "motorcycle": 132.0,
+      "pedestrian": 766.0,
+      "trailer": 30.0,
+      "truck": 81.0
+    },
+    "fp": {
+      "bicycle": 3.0,
+      "bus": 7.0,
+      "car": 261.0,
+      "motorcycle": 31.0,
+      "pedestrian": 238.0,
+      "trailer": 13.0,
+      "truck": 10.0
+    },
+    "fn": {
+      "bicycle": 42.0,
+      "bus": 16.0,
+      "car": 798.0,
+      "motorcycle": 97.0,
+      "pedestrian": 582.0,
+      "trailer": 10.0,
+      "truck": 92.0
+    },
+    "ids": {
+      "bicycle": 0.0,
+      "bus": 0.0,
+      "car": 64.0,
+      "motorcycle": 9.0,
+      "pedestrian": 122.0,
+      "trailer": 1.0,
+      "truck": 4.0
+    },
+    "frag": {
+      "bicycle": 1.0,
+      "bus": 3.0,
+      "car": 19.0,
+      "motorcycle": 4.0,
+      "pedestrian": 40.0,
+      "trailer": 4.0,
+      "truck": 1.0
+    },
+    "tid": {
+      "bicycle": 3.0,
+      "bus": 1.0,
+      "car": 1.4125,
+      "motorcycle": 2.9444444444444446,
+      "pedestrian": 1.8,
+      "trailer": 0.0,
+      "truck": 2.0
+    },
+    "lgd": {
+      "bicycle": 3.0,
+      "bus": 1.1,
+      "car": 1.7833333333333334,
+      "motorcycle": 3.4444444444444446,
+      "pedestrian": 2.2916666666666665,
+      "trailer": 3.5,
+      "truck": 2.8333333333333335
+    }
+  },
+  "eval_time": 36.12555980682373,
+  "cfg": {
+    "tracking_names": [
+      "bicycle",
+      "bus",
+      "car",
+      "motorcycle",
+      "pedestrian",
+      "trailer",
+      "truck"
+    ],
+    "pretty_tracking_names": {
+      "bicycle": "Bicycle",
+      "bus": "Bus",
+      "car": "Car",
+      "motorcycle": "Motorcycle",
+      "pedestrian": "Pedestrian",
+      "trailer": "Trailer",
+      "truck": "Truck"
+    },
+    "tracking_colors": {
+      "bicycle": "C9",
+      "bus": "C2",
+      "car": "C0",
+      "motorcycle": "C6",
+      "pedestrian": "C5",
+      "trailer": "C3",
+      "truck": "C1"
+    },
+    "class_range": {
+      "car": 50,
+      "truck": 50,
+      "bus": 50,
+      "trailer": 50,
+      "pedestrian": 40,
+      "motorcycle": 40,
+      "bicycle": 40
+    },
+    "dist_fcn": "center_distance",
+    "dist_th_tp": 2.0,
+    "min_recall": 0.1,
+    "max_boxes_per_sample": 600,
+    "metric_worst": {
+      "amota": 0.0,
+      "amotp": 2.0,
+      "recall": 0.0,
+      "motar": 0.0,
+      "mota": 0.0,
+      "motp": 2.0,
+      "mt": 0.0,
+      "ml": -1.0,
+      "faf": 500,
+      "gt": -1,
+      "tp": 0.0,
+      "fp": -1.0,
+      "fn": -1.0,
+      "ids": -1.0,
+      "frag": -1.0,
+      "tid": 20,
+      "lgd": 20
+    },
+    "num_thresholds": 40
+  },
+  "amota": 0.43666760335553517,
+  "amotp": 1.2351744352163598,
+  "recall": 0.6043204157856098,
+  "motar": 0.7814799951346052,
+  "gt": 685.5714285714286,
+  "mota": 0.44921536223020625,
+  "motp": 0.7840797325428042,
+  "mt": 101.0,
+  "ml": 73.0,
+  "faf": 64.62978765440654,
+  "tp": 2962.0,
+  "fp": 563.0,
+  "fn": 1637.0,
+  "ids": 200.0,
+  "frag": 72.0,
+  "tid": 1.7367063492063493,
+  "lgd": 2.5646825396825395,
+  "meta": {
+    "use_camera": true,
+    "use_lidar": false,
+    "use_radar": true,
+    "use_map": false,
+    "use_external": false
+  }
+}
