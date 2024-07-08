@@ -6,11 +6,11 @@
 *data*
 
 # Detection generated folders
-Detection/checkpoint/
-Detection/CRN.egg-info/
+Detection/checkpoints/
+Detection/detection_output*
 Detection/build/
 Detection/outputs/
-Detection/detection_output*
+Detection/results*
 Detection/*.txt
 
 # Tracking generated folders
