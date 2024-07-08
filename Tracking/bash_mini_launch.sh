@@ -6,14 +6,37 @@
 # CR3DMOT tracking pipeline
 python mainfile.py --data_root ./data_mini/nuScenes --cat_detection_root ./data_mini/cat_detection/ --split mini_val --keyframes_only --use_R
 
-# concatenating results into formatted json
-python mainfile.py --data_root ./data_mini/nuScenes --cat_detection_root ./data_mini/cat_detection/  --split mini_val --concat
+# nuscenes official evaluation file
+python evaluate.py --result_path output/track_output_CRN_mini/track_results_nusc.json --output_dir output/track_output_CRN_mini/ \
+                    --eval_set val --dataroot ./data_mini/nuScenes 
+
+mv output/track_output_CRN_mini/ output/exp_mini_v2/kf_R_using_detvel_err
+
+
+
+# CR3DMOT tracking pipeline
+python mainfile.py --data_root ./data_mini/nuScenes --cat_detection_root ./data_mini/cat_detection/ --split mini_val --keyframes_only --use_R
 
 # nuscenes official evaluation file
 python evaluate.py --result_path output/track_output_CRN_mini/track_results_nusc.json --output_dir output/track_output_CRN_mini/ \
                     --eval_set val --dataroot ./data_mini/nuScenes 
 
-mv output/track_output_CRN_mini/ output/exp_mini_v2/global_test_R_kf_thresh_vel_exp2
+mv output/track_output_CRN_mini/ output/exp_mini_v2/kf_R_vel_err_0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
