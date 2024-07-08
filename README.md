@@ -1,4 +1,4 @@
-# CR3DMOT: Camera Radar 3D Multi-Object Tracking (CRN Backbone)
+# CR3DMOT: Camera Radar 3D Multi-Object Tracking (no Backbone)
 
 ## Abstract
 
