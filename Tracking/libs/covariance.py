@@ -134,30 +134,19 @@ class Covariance(object):
       }
 
       # velocity_accuracy = 0.1/3.6 # Nuscenes datasheet specifies a velocity accuracy of 0.1 km/h
-      # R = {
-      #   'bicycle':    [0.05390982, 0.05039431, 0.01863044, 1.29464435, 0.02713823, 0.01169572, 0.01295084, velocity_accuracy, velocity_accuracy, velocity_accuracy],
-      #   'bus':        [0.17546469, 0.13818929, 0.05947248, 0.1979503 , 0.78867322, 0.05507407, 0.06684149, velocity_accuracy, velocity_accuracy, velocity_accuracy],
-      #   'car':        [0.08900372, 0.09412005, 0.03265469, 1.00535696, 0.10912802, 0.02359175, 0.02455134, velocity_accuracy, velocity_accuracy, velocity_accuracy],
-      #   'motorcycle': [0.04052819, 0.0398904 , 0.01511711, 1.06442726, 0.03291016, 0.00957574, 0.0111605 , velocity_accuracy, velocity_accuracy, velocity_accuracy],
-      #   'pedestrian': [0.03855275, 0.0377111 , 0.02482115, 2.0751833 , 0.02286483, 0.0136347 , 0.0203149 , velocity_accuracy, velocity_accuracy, velocity_accuracy],
-      #   'trailer':    [0.23228021, 0.22229261, 0.07006275, 1.05163481, 1.37451601, 0.06354783, 0.10500918, velocity_accuracy, velocity_accuracy, velocity_accuracy],
-      #   'truck':      [0.14862173, 0.1444596 , 0.05417157, 0.73122169, 0.69387238, 0.05484365, 0.07748085, velocity_accuracy, velocity_accuracy, velocity_accuracy]
-      # }
-
       R = {
-        'bicycle':    [0.05390982, 0.05039431, 0.01863044, 1.29464435, 0.02713823, 0.01169572, 0.01295084, 0.17313835980121195, 0.17313835980121195, 0.17313835980121195],
-        'bus':        [0.17546469, 0.13818929, 0.05947248, 0.1979503 , 0.78867322, 0.05507407, 0.06684149, 0.3891273398455914, 0.3891273398455914, 0.3891273398455914],
-        'car':        [0.08900372, 0.09412005, 0.03265469, 1.00535696, 0.10912802, 0.02359175, 0.02455134, 0.2962744515889376, 0.2962744515889376, 0.2962744515889376],
-        'motorcycle': [0.04052819, 0.0398904 , 0.01511711, 1.06442726, 0.03291016, 0.00957574, 0.0111605 , 0.42594582831221534, 0.42594582831221534, 0.42594582831221534],
-        'pedestrian': [0.03855275, 0.0377111 , 0.02482115, 2.0751833 , 0.02286483, 0.0136347 , 0.0203149 , 0.35769067763313744, 0.35769067763313744, 0.35769067763313744],
-        'trailer':    [0.23228021, 0.22229261, 0.07006275, 1.05163481, 1.37451601, 0.06354783, 0.10500918, 3.18953823610149215, 3.18953823610149215, 3.18953823610149215],
-        'truck':      [0.14862173, 0.1444596 , 0.05417157, 0.73122169, 0.69387238, 0.05484365, 0.07748085, 0.23110958109764881, 0.23110958109764881, 0.23110958109764881]
+        'bicycle':    [0.05390982, 0.05039431, 0.01863044, 1.29464435, 0.02713823, 0.01169572, 0.01295084, velocity_accuracy, velocity_accuracy, velocity_accuracy],
+        'bus':        [0.17546469, 0.13818929, 0.05947248, 0.1979503 , 0.78867322, 0.05507407, 0.06684149, velocity_accuracy, velocity_accuracy, velocity_accuracy],
+        'car':        [0.08900372, 0.09412005, 0.03265469, 1.00535696, 0.10912802, 0.02359175, 0.02455134, velocity_accuracy, velocity_accuracy, velocity_accuracy],
+        'motorcycle': [0.04052819, 0.0398904 , 0.01511711, 1.06442726, 0.03291016, 0.00957574, 0.0111605 , velocity_accuracy, velocity_accuracy, velocity_accuracy],
+        'pedestrian': [0.03855275, 0.0377111 , 0.02482115, 2.0751833 , 0.02286483, 0.0136347 , 0.0203149 , velocity_accuracy, velocity_accuracy, velocity_accuracy],
+        'trailer':    [0.23228021, 0.22229261, 0.07006275, 1.05163481, 1.37451601, 0.06354783, 0.10500918, velocity_accuracy, velocity_accuracy, velocity_accuracy],
+        'truck':      [0.14862173, 0.1444596 , 0.05417157, 0.73122169, 0.69387238, 0.05484365, 0.07748085, velocity_accuracy, velocity_accuracy, velocity_accuracy]
       }
       
       self.P = {tracking_name: np.diag(P[tracking_name]) for tracking_name in NUSCENES_TRACKING_NAMES}
       self.Q = {tracking_name: np.diag(Q[tracking_name]) for tracking_name in NUSCENES_TRACKING_NAMES}
       self.R = {tracking_name: np.diag(R[tracking_name]) for tracking_name in NUSCENES_TRACKING_NAMES}
-
 
     else:
       assert(False)
