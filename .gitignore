@@ -16,6 +16,7 @@ Detection/*.txt
 # Tracking generated folders
 Tracking/Xinshuo_PyToolbox
 Tracking/LICENSE
+Tracking/output/track_output_CRN/
 
 Tracking/*.json
 Tracking/results*
@@ -24,4 +25,4 @@ Tracking/results*
 *plots
 *.bin
 *.json
-
+git_bash.sh
