@@ -239,7 +239,7 @@ class TrackingEval:
         # Print metrics to log
         print('Logging results')
         original_stdout = sys.stdout    
-        with open(self.output_dir+'shell_output.txt', 'w') as f:
+        with open(self.output_dir+'shell_output.txt', 'a') as f:
             sys.stdout = f
             print_final_metrics(metrics)
             
