@@ -57,7 +57,9 @@ def map_pointcloud_to_image(
 
 data_root = 'data/nuScenes'
 INFO_PATHS = ['data/nuScenes/nuscenes_infos_train.pkl',
-              'data/nuScenes/nuscenes_infos_val.pkl']
+              'data/nuScenes/nuscenes_infos_val.pkl',
+              'data/nuScenes/nuscenes_infos_test.pkl']
+
 
 lidar_key = 'LIDAR_TOP'
 cam_keys = [

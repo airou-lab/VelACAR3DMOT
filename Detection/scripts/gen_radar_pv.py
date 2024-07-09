@@ -14,10 +14,10 @@ RADAR_SPLIT = 'radar_bev_filter'
 OUT_PATH = 'radar_pv_filter'
 info_paths = ['data/nuScenes/nuscenes_infos_train.pkl', 'data/nuScenes/nuscenes_infos_val.pkl']
 
-# DATA_PATH = 'data/nuScenes/v1.0-test'
-# RADAR_SPLIT = 'radar_bev_filter_test'
-# OUT_PATH = 'radar_pv_filter_test'
-# info_paths = ['data/nuScenes/nuscenes_infos_test.pkl']
+DATA_PATH = 'data/nuScenes'
+RADAR_SPLIT = 'radar_bev_filter_test'
+OUT_PATH = 'radar_pv_filter'
+info_paths = ['data/nuScenes/nuscenes_infos_test.pkl']
 
 MIN_DISTANCE = 0.1
 MAX_DISTANCE = 100.

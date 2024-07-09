@@ -159,12 +159,12 @@ def main():
     val_infos = generate_info(trainval_nusc, val_scenes)
     mmcv.dump(val_infos, './data/nuScenes/nuscenes_infos_val.pkl')
 
-    # test_nusc = NuScenes(version='v1.0-test',
-    #                      dataroot='./data/nuScenes/v1.0-test/',
-    #                      verbose=True)
-    # test_scenes = splits.test
-    # test_infos = generate_info(test_nusc, test_scenes)
-    # mmcv.dump(test_infos, './data/nuScenes/nuscenes_infos_test.pkl')
+    test_nusc = NuScenes(version='v1.0-test',
+                         dataroot='./data/nuScenes/',
+                         verbose=True)
+    test_scenes = splits.test
+    test_infos = generate_info(test_nusc, test_scenes)
+    mmcv.dump(test_infos, './data/nuScenes/nuscenes_infos_test.pkl')
 
 
 if __name__ == '__main__':

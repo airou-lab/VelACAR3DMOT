@@ -475,7 +475,7 @@ class BEVDepthLightningModel(LightningModule):
             img_backbone_conf=self.backbone_img_conf,
             classes=self.class_names,
             data_root=self.data_root,
-            info_paths=self.val_info_paths,
+            info_paths=self.predict_info_paths,
             is_train=False,
             img_conf=self.img_conf,
             load_interval=self.load_interval,
