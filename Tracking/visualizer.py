@@ -407,7 +407,7 @@ def visualization_logs(args):
 def create_parser():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_root', type=str, default='./data/nuScenes', help='nuScenes data folder')
+    parser.add_argument('--data_root', type=str, default='./data_mini/nuScenes', help='nuScenes data folder')
     parser.add_argument('--split', type=str, default='val', help='train/val/test')
     parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='train_val/test')
     parser.add_argument('--detection_method','--det', type=str, default='CRN', help='detection method')
