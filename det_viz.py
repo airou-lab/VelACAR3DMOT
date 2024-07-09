@@ -241,7 +241,7 @@ def visualization(args):
                                             token = det_sample['sample_token']
                                             )
 
-                                if args.det_method == 'CRN':
+                                if args.detection_method == 'CRN':
                                     #translate the box upward by h/2, fixing CRN bbox shift (see CRN git issues)
                                     box.center[2]+=box.wlh[2]/2
 
@@ -286,10 +286,9 @@ def create_parser():
     parser.add_argument('--split', type=str, default='val', help='train/val/test')
     parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='see sensor_list')
 
-    parser.add_argument('--score_thresh', type=float, default=0.4, help='Minimum detection score threshold')    
+    parser.add_argument('--detection_method', type=str, default='CRN', help='CRN/Radiant')
     parser.add_argument('--color_method',type=str, default='class', help='class/random')
-    parser.add_argument('--det_method',type=str, default='CRN', help='CRN/Radiant')
-
+    
     parser.add_argument('--viz_by_cat','-vbc',action='store_true', default=False, help='visualize each frame category by category')
     parser.add_argument('--cat', type=str, default=None, help='specify the desired category to visualize')
 
@@ -305,6 +304,29 @@ def create_parser():
 
     return parser
 
+def check_args(args):
+    sensor_list = ['CAM_BACK','CAM_BACK_LEFT','CAM_BACK_RIGHT','CAM_FRONT','CAM_FRONT_LEFT','CAM_FRONT_RIGHT',
+                    'LIDAR_TOP',
+                    'RADAR_BACK_LEFT','RADAR_BACK_RIGHT','RADAR_FRONT','RADAR_FRONT_LEFT','RADAR_FRONT_RIGHT']  
+
+    if 'mini' in args.split:
+        args.split = (args.split).split('mini_')[1]
+        
+        if 'mini' not in args.data_root :
+            args.data_root= (args.data_root).split('data')[0]+'data_mini'+(args.data_root).split('data')[1]
+
+        if 'mini' not in args.det_data_dir :
+            args.det_data_dir= (args.det_data_dir).split('detection_output')[0]+'detection_output_mini'+(args.det_data_dir).split('detection_output')[1]
+
+    assert args.split in ['train','val','test'], 'Wrong split type'
+    assert args.sensor in sensor_list, 'Unknown sensor selected'        
+    assert args.color_method in ['class','random'],'Unknown color_method selected' 
+
+    assert os.path.exists(args.data_root), 'Data folder at %s not found'%(args.data_root)
+    assert os.path.exists(args.det_data_dir), 'Detection folder at %s not found'%(args.det_data_dir)
+    assert os.path.exists(args.det_data_dir+'/results_nusc.json'), 'Missing json detection file at %s'%(args.det_data_dir)
+
+    print(args)
 
 
 if __name__ == '__main__':
@@ -316,22 +338,23 @@ if __name__ == '__main__':
     cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'construction_vehicle', 'motorcycle', 'trailer']
 
     parser = create_parser()
-    args = parser.parse_args()
-
-    assert args.split in ['train','val','test'], 'Unknown split type'
-    assert args.score_thresh >= 0,'Score threshold needs to be a positive number' 
-    assert args.sensor in sensor_list,'Unknown sensor selected' 
-    assert args.color_method in ['class','random'],'Unknown color_method selected' 
-
-    if args.cat!=None or args.viz_by_cat==True: 
-        assert args.viz_by_cat==True,'Argument -vbc must be set to true to use argument cat'
-        assert args.cat in cat_list, 'Unregognized or missing object category'
+    args = parser.parse_args() 
+    check_args(args)
 
     visualization(args)
 
 '''
 launch with :
 
-python det_viz.py --det_method CRN --color_method class --disp_custom -vvv
+mini:
+python det_viz.py --detection_method CRN --color_method class --disp_custom -vvv
+
+val:
+python det_viz.py --data_root ./data/nuScenes --split val --det_data_dir ./Detection/detection_output \
+                    --detection_method CRN --color_method class --disp_custom -vvv
+
+test:
+python det_viz.py --data_root ./data/nuScenes --split test --det_data_dir ./Detection/detection_output \
+                    --detection_method CRN --color_method class --disp_custom -vvv                
 
 '''
