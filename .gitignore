@@ -18,7 +18,7 @@ Tracking/Xinshuo_PyToolbox
 Tracking/LICENSE
 
 Tracking/*.json
-Tracking/results
+Tracking/results*
 
 *bckp*
 *plots
