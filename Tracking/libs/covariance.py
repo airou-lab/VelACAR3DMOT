@@ -133,7 +133,7 @@ class Covariance(object):
         'truck':      [9.45275998e-02, 9.45620374e-02, 8.38061721e-03, 1.41680460e-01, 0, 0, 0, 9.45275998e-02, 9.45620374e-02, 8.38061721e-03, 1.41680460e-01]
       }
 
-      # velocity_accuracy = 0.1/3.6 # Nuscenes datasheet specifies a velocity accuracy of 0.1 km/h
+      velocity_accuracy = 0.1/3.6 # Nuscenes datasheet specifies a velocity accuracy of 0.1 km/h
       R = {
         'bicycle':    [0.05390982, 0.05039431, 0.01863044, 1.29464435, 0.02713823, 0.01169572, 0.01295084, velocity_accuracy, velocity_accuracy, velocity_accuracy],
         'bus':        [0.17546469, 0.13818929, 0.05947248, 0.1979503 , 0.78867322, 0.05507407, 0.06684149, velocity_accuracy, velocity_accuracy, velocity_accuracy],
