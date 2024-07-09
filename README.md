@@ -119,6 +119,22 @@ python [EXP_PATH] --ckpt_path [CKPT_PATH] -e -b 4 --gpus 4
 ```shell
 python exps/det/CRN_r50_256x704_128x128_4key.py --ckpt_path checkpoint/CRN_r50_256x704_128x128_4key.pth -e -b 1 --gpus 1
 ```
+**Testing**  
+Before testing, make sure you modify the script of ```scripts/gen_radar_bev.py and scripts/gen_radar_pv.py``` by uncommenting the testing blocs at the top of the files. <br>
+Then, re-run step 4:
+```shell
+python scripts/gen_radar_bev.py  # accumulate sweeps and transform to LiDAR coords
+python scripts/gen_radar_pv.py  # transform to camera coords
+```
+And launch the test pipeline :
+```shell
+python [EXP_PATH] --ckpt_path [CKPT_PATH] -p -b 4 --gpus 4
+```
+Example with R50:
+```shell
+python exps/det/CRN_r50_256x704_128x128_4key.py --ckpt_path checkpoint/CRN_r50_256x704_128x128_4key.pth -p -b 1 --gpus 1
+```
+
 
 ### Model Zoo
 All models use 4 keyframes and are trained without CBGS.  
