@@ -59,16 +59,18 @@ def exp_jobs_handler (args):
     nusc = load_nusc(args.split,args.data_root)
 
     orig_score = get_score_thresh(args,args.cat)
-    score = round(orig_score-0.1,3) # Avoid decimal errors
+    score = round(orig_score-0.01,3) # Avoid decimal errors
 
     best_amota = 0
     best_thresh = 0
     best_amotp = 2
     best_thresh_amotp = 0
 
-    while score <=(orig_score+0.1):
+    # while score <=(orig_score+0.1):
+    while score <=(orig_score+0.01):
         args.score_thresh = score
         print('thresh:',args.score_thresh)
+        log_args(args)
         
         # CR3DMOT pipeline
         mainfile.tracking(args,
@@ -77,7 +79,7 @@ def exp_jobs_handler (args):
                             )
 
         mainfile.concat_results(args,
-                                data_dir='./results/logs/'+args.detection_method+'_mini' if 'mini' in args.data_root  else './results/logs/'+args.detection_method,
+                                data_dir='./results/logs/'+args.detection_method+'_mini' if 'mini' in args.data_root else './results/logs/'+args.detection_method,
                                 cat_list=cat_list,
                                 nusc=nusc
                                 )
@@ -85,10 +87,10 @@ def exp_jobs_handler (args):
 
 
         # nusc eval pipeline
-        result_path_ = os.path.expanduser('output/track_output_CRN_mini/track_results_nusc.json')
-        output_dir_ = os.path.expanduser('output/track_output_CRN_mini/')
+        result_path_ = os.path.expanduser('output/track_output_'+args.detection_method+'_mini/track_results_nusc.json')
+        output_dir_ = os.path.expanduser('output/track_output_'+args.detection_method+'_mini/')
         eval_set_ = 'val'
-        dataroot_ = './data_mini/nuScenes'
+        dataroot_ = './data_mini/nuScenes' if 'mini' in args.data_root else './data/nuScenes'
         version_ = 'v1.0-trainval'
         config_path = ''
         render_curves_ = bool(0)
@@ -123,11 +125,11 @@ def exp_jobs_handler (args):
 
 
         # Saving output
-        os.rename("./output/track_output_CRN_mini", "./output/exp_mini_v2/CRN_score_thresh/%s/%s"%(args.cat,str(score)))
+        os.rename("./output/track_output_"+args.detection_method+"_mini", "./output/exp_mini/"+args.detection_method+"_score_thresh/%s/%s"%(args.cat,str(score)))
         score = round(score+0.001,3) # Avoid decimal errors
 
 
-    with open ('./output/exp_mini_v2/CRN_score_thresh/exp_output_'+args.cat+'.txt','w') as f:
+    with open ('./output/exp_mini/'+args.detection_method+'_score_thresh/exp_output_'+args.cat+'.txt','w') as f:
         f.write('best AMOTA :\n')
         f.write(str(best_amota))
         f.write('\n')
