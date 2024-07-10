@@ -57,13 +57,13 @@ class AB3DMOT(object):
 				else: assert False, 'cat name error: %s'%(cat)
 			
 			elif self.det_name == 'Radiant':
-				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 1, 2 
-				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 1, 2 
-				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 1, 2 
-				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 3, 2 
-				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 1, 2 
-				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 3, 2 
-				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 3, 2 
+				if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 1, 5 
+				elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 1, 5 
+				elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 1, 5 
+				elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 3, 5 
+				elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 1, 5 
+				elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 3, 5 
+				elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'hungar', self.args.metric, self.args.thresh, 3, 5 
 				else: assert False, 'cat name error: %s'%(cat)
 
 			else: assert False, 'Error : Unknown detector %s'%(self.det_name)
