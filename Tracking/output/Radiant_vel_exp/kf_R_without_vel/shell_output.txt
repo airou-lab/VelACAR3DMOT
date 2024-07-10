@@ -1,0 +1,37 @@
+Arguments :
+Namespace(affi_pro=False, cat=None, cat_detection_root='./data/cat_detection/', concat=False, data_root='./data/nuScenes', debug=False, detection_method='Radiant', detection_root='./data/detection_output/', exp=False, go_sep=False, gt_track=False, keyframes_only=True, log_viz=False, max_age=None, metric='giou_3d', min_hits=None, run_hyper_exp=False, score_thresh=-1, sensor='CAM_FRONT', split='val', thresh=None, use_R=True, use_vel=False, verbose=0, viz=False)
+
+
+
+### Final results ###
+
+Per-class results:
+		AMOTA	AMOTP	RECALL	MOTAR	GT	MOTA	MOTP	MT	ML	FAF	TP	FP	FN	IDS	FRAG	TID	LGD
+bicycle 	0.211	1.639	0.320	0.791	1993	0.246	0.586	11	87	9.4	621	130	1356	16	17	2.41	2.88
+bus     	0.391	1.459	0.490	0.796	2112	0.374	0.759	21	40	13.0	993	203	1078	41	70	1.58	3.32
+car     	0.403	1.237	0.577	0.736	58317	0.367	0.448	1029	1221	133.9	29103	7681	24681	4533	867	1.31	2.25
+motorcy 	0.230	1.623	0.324	0.881	1977	0.275	0.547	8	71	5.6	616	73	1337	24	20	3.32	4.12
+pedestr 	0.389	1.337	0.489	0.705	25423	0.315	0.723	325	557	77.5	11355	3345	13002	1066	616	1.70	2.66
+trailer 	0.051	1.890	0.180	0.443	2425	0.077	0.968	5	100	24.0	420	234	1988	17	31	2.79	4.76
+truck   	0.214	1.579	0.343	0.644	9650	0.216	0.705	58	277	31.3	3233	1151	6338	79	145	1.97	3.86
+
+Aggregated results:
+AMOTA	0.270
+AMOTP	1.538
+RECALL	0.389
+MOTAR	0.714
+GT	14556
+MOTA	0.267
+MOTP	0.676
+MT	1457
+ML	2353
+FAF	42.1
+TP	46341
+FP	12817
+FN	49780
+IDS	5776
+FRAG	1766
+TID	2.15
+LGD	3.41
+Eval time: 1307.7s
+
