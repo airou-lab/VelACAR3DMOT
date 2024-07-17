@@ -10,14 +10,14 @@
 ### Git
 ```shell
 # clone repo
-git clone git@github.com:airou-lab/ExtendedCRN.git
+git clone git@github.com:airou-lab/CR3DMOT.git
 
 ```
 
 ### Docker
 Creating Docker image and container for this project
 ```
-# Pulling base nvidia image
+# Pulling base nvidia image (optional)
 sudo docker pull nvidia/cuda:11.1.1-devel-ubuntu20.04
 
 # Getting to Docker folder
@@ -26,15 +26,15 @@ cd ~/Documents/ExtendedCRN/Docker
 # Building CRN image
 sudo docker build -t extcrn_image:v1 .
 
-# Creating mounted gpu-enabled container
-xhost local:root	# Input this for every new shell
-sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
-
 # To have a GUI-enabled container :
 sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it \
 		--env="DISPLAY" \
 		--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
 		extcrn_image:v1
+
+# Creating mounted gpu-enabled container (without GUI /!\)
+xhost local:root    # Input this for every new shell
+sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
 ```
 You should now be in the container shell.
 
