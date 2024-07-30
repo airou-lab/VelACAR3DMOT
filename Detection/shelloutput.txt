@@ -1,0 +1,33 @@
+/pytorch_1623448265233/work/c10/core/TensorImpl.h:1156.)
+  return torch.max_pool2d(input, kernel_size, stride, padding, dilation, ceil_mode)
+[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>] 36114/36114, 1.9 task/s, elapsed: 18942s, ETA:     0s
+Formating bboxes of img_bbox
+Start to convert detection format...
+[>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>] 36114/36114, 33.7 task/s, elapsed: 1070s, ETA:     0s
+Results writes to ./data/nuScenes/fusion_data/train_result/radiant_pgd/eval_nus_infos_val/fusion/img_bbox/results_nusc.json
+Evaluating bboxes of img_bbox
+
+mAP: 0.3825
+mATE: 0.6175
+mASE: 0.2651
+mAOE: 0.4394
+mAVE: 1.2940
+mAAE: 1.0000
+NDS: 0.3590
+Eval time: 1741.7s
+
+Per-class results:
+Object 	Class	AP	ATE	ASE	AOE	AVE	AAE
+car		0.614	0.397	0.150	0.095	2.129	1.000
+truck		0.309	0.698	0.214	0.146	1.440	1.000
+bus		0.382	0.710	0.193	0.159	2.498	1.000
+trail		0.138	0.980	0.239	0.655	0.526	1.000
+CV		0.067	0.849	0.407	0.999	0.105	1.000
+pedestrian	0.461	0.580	0.290	0.596	0.838	1.000
+motorcycle	0.393	0.548	0.265	0.582	2.083	1.000
+bicycle	0.373	0.532	0.296	0.600	0.732	1.000
+traffic_cone	0.603	0.394	0.313	nan	nan	nan
+barrier	0.484	0.487	0.283	0.123	nan	nan
+
+{'img_bbox_NuScenes/car_AP_dist_0.5': 0.3043, 'img_bbox_NuScenes/car_AP_dist_1.0': 0.5769, 'img_bbox_NuScenes/car_AP_dist_2.0': 0.7441, 'img_bbox_NuScenes/car_AP_dist_4.0': 0.8302, 'img_bbox_NuScenes/car_trans_err': 0.3972, 'img_bbox_NuScenes/car_scale_err': 0.1504, 'img_bbox_NuScenes/car_orient_err': 0.0948, 'img_bbox_NuScenes/car_vel_err': 2.1294, 'img_bbox_NuScenes/car_attr_err': 1.0, 'img_bbox_NuScenes/mATE': 0.6175, 'img_bbox_NuScenes/mASE': 0.2651, 'img_bbox_NuScenes/mAOE': 0.4394, 'img_bbox_NuScenes/mAVE': 1.294, 'img_bbox_NuScenes/mAAE': 1.0, 'img_bbox_NuScenes/truck_AP_dist_0.5': 0.0362, 'img_bbox_NuScenes/truck_AP_dist_1.0': 0.1978, 'img_bbox_NuScenes/truck_AP_dist_2.0': 0.4247, 'img_bbox_NuScenes/truck_AP_dist_4.0': 0.577, 'img_bbox_NuScenes/truck_trans_err': 0.6984, 'img_bbox_NuScenes/truck_scale_err': 0.2143, 'img_bbox_NuScenes/truck_orient_err': 0.1457, 'img_bbox_NuScenes/truck_vel_err': 1.4399, 'img_bbox_NuScenes/truck_attr_err': 1.0, 'img_bbox_NuScenes/trailer_AP_dist_0.5': 0.0, 'img_bbox_NuScenes/trailer_AP_dist_1.0': 0.0171, 'img_bbox_NuScenes/trailer_AP_dist_2.0': 0.1519, 'img_bbox_NuScenes/trailer_AP_dist_4.0': 0.3843, 'img_bbox_NuScenes/trailer_trans_err': 0.9803, 'img_bbox_NuScenes/trailer_scale_err': 0.2391, 'img_bbox_NuScenes/trailer_orient_err': 0.6546, 'img_bbox_NuScenes/trailer_vel_err': 0.5262, 'img_bbox_NuScenes/trailer_attr_err': 1.0, 'img_bbox_NuScenes/bus_AP_dist_0.5': 0.0336, 'img_bbox_NuScenes/bus_AP_dist_1.0': 0.2487, 'img_bbox_NuScenes/bus_AP_dist_2.0': 0.5484, 'img_bbox_NuScenes/bus_AP_dist_4.0': 0.6988, 'img_bbox_NuScenes/bus_trans_err': 0.7096, 'img_bbox_NuScenes/bus_scale_err': 0.1925, 'img_bbox_NuScenes/bus_orient_err': 0.1591, 'img_bbox_NuScenes/bus_vel_err': 2.4985, 'img_bbox_NuScenes/bus_attr_err': 1.0, 'img_bbox_NuScenes/construction_vehicle_AP_dist_0.5': 0.0, 'img_bbox_NuScenes/construction_vehicle_AP_dist_1.0': 0.0188, 'img_bbox_NuScenes/construction_vehicle_AP_dist_2.0': 0.089, 'img_bbox_NuScenes/construction_vehicle_AP_dist_4.0': 0.1591, 'img_bbox_NuScenes/construction_vehicle_trans_err': 0.8494, 'img_bbox_NuScenes/construction_vehicle_scale_err': 0.4073, 'img_bbox_NuScenes/construction_vehicle_orient_err': 0.9993, 'img_bbox_NuScenes/construction_vehicle_vel_err': 0.1051, 'img_bbox_NuScenes/construction_vehicle_attr_err': 1.0, 'img_bbox_NuScenes/bicycle_AP_dist_0.5': 0.1435, 'img_bbox_NuScenes/bicycle_AP_dist_1.0': 0.323, 'img_bbox_NuScenes/bicycle_AP_dist_2.0': 0.4638, 'img_bbox_NuScenes/bicycle_AP_dist_4.0': 0.5611, 'img_bbox_NuScenes/bicycle_trans_err': 0.5324, 'img_bbox_NuScenes/bicycle_scale_err': 0.2957, 'img_bbox_NuScenes/bicycle_orient_err': 0.6002, 'img_bbox_NuScenes/bicycle_vel_err': 0.7318, 'img_bbox_NuScenes/bicycle_attr_err': 1.0, 'img_bbox_NuScenes/motorcycle_AP_dist_0.5': 0.132, 'img_bbox_NuScenes/motorcycle_AP_dist_1.0': 0.3535, 'img_bbox_NuScenes/motorcycle_AP_dist_2.0': 0.4983, 'img_bbox_NuScenes/motorcycle_AP_dist_4.0': 0.5891, 'img_bbox_NuScenes/motorcycle_trans_err': 0.5483, 'img_bbox_NuScenes/motorcycle_scale_err': 0.2649, 'img_bbox_NuScenes/motorcycle_orient_err': 0.5822, 'img_bbox_NuScenes/motorcycle_vel_err': 2.0827, 'img_bbox_NuScenes/motorcycle_attr_err': 1.0, 'img_bbox_NuScenes/pedestrian_AP_dist_0.5': 0.161, 'img_bbox_NuScenes/pedestrian_AP_dist_1.0': 0.3772, 'img_bbox_NuScenes/pedestrian_AP_dist_2.0': 0.5881, 'img_bbox_NuScenes/pedestrian_AP_dist_4.0': 0.7194, 'img_bbox_NuScenes/pedestrian_trans_err': 0.5796, 'img_bbox_NuScenes/pedestrian_scale_err': 0.2902, 'img_bbox_NuScenes/pedestrian_orient_err': 0.5964, 'img_bbox_NuScenes/pedestrian_vel_err': 0.8384, 'img_bbox_NuScenes/pedestrian_attr_err': 1.0, 'img_bbox_NuScenes/traffic_cone_AP_dist_0.5': 0.3547, 'img_bbox_NuScenes/traffic_cone_AP_dist_1.0': 0.5781, 'img_bbox_NuScenes/traffic_cone_AP_dist_2.0': 0.7067, 'img_bbox_NuScenes/traffic_cone_AP_dist_4.0': 0.7712, 'img_bbox_NuScenes/traffic_cone_trans_err': 0.3937, 'img_bbox_NuScenes/traffic_cone_scale_err': 0.3134, 'img_bbox_NuScenes/traffic_cone_orient_err': nan, 'img_bbox_NuScenes/traffic_cone_vel_err': nan, 'img_bbox_NuScenes/traffic_cone_attr_err': nan, 'img_bbox_NuScenes/barrier_AP_dist_0.5': 0.1973, 'img_bbox_NuScenes/barrier_AP_dist_1.0': 0.4448, 'img_bbox_NuScenes/barrier_AP_dist_2.0': 0.6131, 'img_bbox_NuScenes/barrier_AP_dist_4.0': 0.6828, 'img_bbox_NuScenes/barrier_trans_err': 0.4867, 'img_bbox_NuScenes/barrier_scale_err': 0.2828, 'img_bbox_NuScenes/barrier_orient_err': 0.1225, 'img_bbox_NuScenes/barrier_vel_err': nan, 'img_bbox_NuScenes/barrier_attr_err': nan, 'img_bbox_NuScenes/NDS': 0.35904377193408454, 'img_bbox_NuScenes/mAP': 0.38249315296747305}
+
