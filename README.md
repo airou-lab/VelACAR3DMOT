@@ -10,8 +10,8 @@
 ### Git
 ```shell
 # clone repo
-git clone git@github.com:airou-lab/ExtendedCRN.git
-
+git clone git@github.com:airou-lab/VelAcaR-MOT.git
+(make sure to get the right branch)
 ```
 
 ### Docker
