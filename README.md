@@ -1,4 +1,4 @@
-# CR3DMOT: Camera Radar 3D Multi-Object Tracking (CRN Backbone)
+# VelACaR-MOT: Velocity Aware Camera-Radar 3D Multi-Object Tracking (CRN Backbone)
 
 ## Abstract
 
