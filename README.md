@@ -24,7 +24,7 @@ sudo docker pull nvidia/cuda:11.1.1-devel-ubuntu20.04
 cd ~/Documents/VelacarRadiant/Docker
 
 # Building CRN image
-sudo docker build -t extcrn_image:v1 .
+sudo docker build -t velacar:v1 .
 
 # Creating mounted gpu-enabled container
 xhost local:root	# Input this for every new shell
