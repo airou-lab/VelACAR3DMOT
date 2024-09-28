@@ -11,7 +11,7 @@
 ```shell
 # clone repo
 git clone git@github.com:airou-lab/VelAcaR-MOT.git
-
+(make sure to get the right branch)
 ```
 
 ### Docker
@@ -27,7 +27,10 @@ cd ~/Documents/VelacarRadiant/Docker
 sudo docker build -t velacar:v1 .
 
 # Creating mounted gpu-enabled container
-xhost local:root	# Input this for every new shell
+xhost losudo docker run --name VelacarCRN_V1 -v ~/Documents/VelacarCRN:/home/ws --gpus all --shm-size 10G -it \
+        --env="DISPLAY" \
+        --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+        velacar:v1cal:root	# Input this for every new shell
 sudo docker run --name VelacarRadiant_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
 
 # To have a GUI-enabled container :
