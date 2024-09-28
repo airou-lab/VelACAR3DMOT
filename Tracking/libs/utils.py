@@ -193,8 +193,8 @@ def get_sensor_data(nusc,sensor,token,verbose=False):# Unused function
     return cs_record, cam_intrinsic
 
 def render_box(self, im: np.ndarray, text: str, vshift:int = 0, hshift:int = 0,
-				view: np.ndarray = np.eye(3), normalize: bool = False,
-				colors: Tuple = ((0, 0, 255), (255, 0, 0), (155, 155, 155)), linewidth: int = 2) -> None:
+				view: np.ndarray = np.eye(3), normalize: bool = False, bottom_disp: bool = False,
+				colors: Tuple = ((0, 0, 255), (255, 0, 0), (155, 155, 155)), linewidth: int = 2 , text_scale : float = 0.5) -> None:
     """
     Renders box using OpenCV2.
     :param im: <np.array: width, height, 3>. Image array. Channels are in BGR order.
@@ -202,8 +202,10 @@ def render_box(self, im: np.ndarray, text: str, vshift:int = 0, hshift:int = 0,
     :param vshift/hshift : int. Add a vertical/horizontal shift to the bbox text.
     :param view: <np.array: 3, 3>. Define a projection if needed (e.g. for drawing projection in an image).
     :param normalize: Whether to normalize the remaining coordinate.
+    :param bottom_disp: Display text under bounding box.
     :param colors: ((R, G, B), (R, G, B), (R, G, B)). Colors for front, side & rear.
     :param linewidth: Linewidth for plot.
+    :param text_scale: size of text.
     """
     corners = view_points(self.corners(), view, normalize=normalize)[:2, :]
 
@@ -236,14 +238,25 @@ def render_box(self, im: np.ndarray, text: str, vshift:int = 0, hshift:int = 0,
              colors[0][::-1], linewidth)
 
     h = corners.T[3][1] - corners.T[0][1]
-    # l = corners.T[0][0] - corners.T[1][0]
+    l = corners.T[0][0] - corners.T[1][0]
 
     center = [center_bottom[0],center_bottom[1]-h/2]
+
+    if bottom_disp:
+        # adding a vertical shif of 0.8*h downwards
+        vshift = int(0.8*h)
+
+    # centering text
+    hshift = -len(text)*10
+    hshift = int(-abs(l)/2)
+
+    if "pedestrian" in text: # fixing too low txt for pedestrian (different bbox type)
+        vshift = int(0.6*h)
 
     cv2.putText(im,
                 text,
                 org=(int(center[0])+hshift, int(center[1])+vshift),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=0.5,color=(0, 0, 0),thickness=1,lineType=cv2.LINE_AA
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=text_scale,color=(0, 0, 0),thickness=1,lineType=cv2.LINE_AA
                 )
 
 
