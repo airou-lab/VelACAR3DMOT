@@ -28,10 +28,10 @@ sudo docker build -t extcrn_image:v1 .
 
 # Creating mounted gpu-enabled container
 xhost local:root	# Input this for every new shell
-sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
+sudo docker run --name ExtCRN_V1 -v ~/Documents/VelacarCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
 
 # To have a GUI-enabled container :
-sudo docker run --name VelacarCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it \
+sudo docker run --name VelacarCRN_V1 -v ~/Documents/VelacarCRN:/home/ws --gpus all --shm-size 10G -it \
 		--env="DISPLAY" \
 		--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
 		extcrn_image:v1
