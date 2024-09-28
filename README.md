@@ -15,7 +15,7 @@ git clone git@github.com:airou-lab/VelAcaR-MOT.git
 ```
 
 ### Docker
-Creating Docker image and container for this project
+Creating CRN-tuned Docker image and container for this project (this may need modifications to run Radiant)
 ```
 # Pulling base nvidia image
 sudo docker pull nvidia/cuda:11.1.1-devel-ubuntu20.04
@@ -23,18 +23,13 @@ sudo docker pull nvidia/cuda:11.1.1-devel-ubuntu20.04
 # Getting to Docker folder
 cd ~/Documents/VelacarRadiant/Docker
 
-# Building CRN image
+# Building velacar image
 sudo docker build -t velacar:v1 .
 
-# Creating mounted gpu-enabled container
-xhost losudo docker run --name VelacarCRN_V1 -v ~/Documents/VelacarCRN:/home/ws --gpus all --shm-size 10G -it \
-        --env="DISPLAY" \
-        --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-        velacar:v1cal:root	# Input this for every new shell
-sudo docker run --name VelacarRadiant_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
+# Creating mounted gpu-enabled GUI-enabled container
 
-# To have a GUI-enabled container :
-sudo docker run --name VelacarCRN_V1 -v ~/Documents/VelacarCRN:/home/ws --gpus all --shm-size 10G -it \
+xhost local:root	# Input this for every new shell
+sudo docker run --name VelacarRadiant_V1 -v ~/Documents/VelacarRadiant_V1:/home/ws --gpus all --shm-size 10G -it \
         	--env="DISPLAY" \
         	--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
         	velacar:v1
