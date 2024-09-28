@@ -24,14 +24,14 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 # getting .yaml configuration file from /Docker folder to container /tmp folder
-COPY ExtCRN.yaml /tmp/ExtCRN.yaml
+COPY velacar.yaml /tmp/velacar.yaml
 
 # Installing all packages and creating conda environment
-RUN conda env create --file /tmp/ExtCRN.yaml
+RUN conda env create --file /tmp/velacar.yaml
 #RUN conda init
-#RUN conda activate ExtCRN
-RUN echo "source activate ExtCRN" > ~/.bashrc
-ENV PATH /opt/conda/envs/ExtCRN/bin:$PATH
+#RUN conda activate velacar
+RUN echo "source activate velacar" > ~/.bashrc
+ENV PATH /opt/conda/envs/velacar/bin:$PATH
 
 # Detection libs
 RUN pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html

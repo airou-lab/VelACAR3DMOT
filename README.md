@@ -1,4 +1,4 @@
-# CR3DMOT: Camera Radar 3D Multi-Object Tracking (CRN Backbone)
+# VelACaR-MOT: Velocity Aware Camera-Radar 3D Multi-Object Tracking (CRN Backbone)
 
 ## Abstract
 
@@ -10,31 +10,34 @@
 ### Git
 ```shell
 # clone repo
-git clone git@github.com:airou-lab/CR3DMOT.git
-
+git clone git@github.com:airou-lab/VelAcaR-MOT.git
+(make sure to get the right branch)
 ```
 
 ### Docker
 Creating Docker image and container for this project
 ```
-# Pulling base nvidia image (optional)
+# Pulling base nvidia image
 sudo docker pull nvidia/cuda:11.1.1-devel-ubuntu20.04
 
 # Getting to Docker folder
-cd ~/Documents/ExtendedCRN/Docker
+cd ~/Documents/VelacarCRN/Docker
 
 # Building CRN image
-sudo docker build -t extcrn_image:v1 .
+sudo docker build -t velacar:v1 .
+
+# Creating mounted gpu-enabled container
+xhost losudo docker run --name VelacarCRN_V1 -v ~/Documents/VelacarCRN:/home/ws --gpus all --shm-size 10G -it \
+        --env="DISPLAY" \
+        --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+        velacar:v1cal:root	# Input this for every new shell
+sudo docker run --name VelacarRadiant_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
 
 # To have a GUI-enabled container :
-sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it \
-		--env="DISPLAY" \
-		--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-		extcrn_image:v1
-
-# Creating mounted gpu-enabled container (without GUI /!\)
-xhost local:root    # Input this for every new shell
-sudo docker run --name ExtCRN_V1 -v ~/Documents/ExtendedCRN:/home/ws --gpus all --shm-size 10G -it extcrn_image:v1
+sudo docker run --name VelacarCRN_V1 -v ~/Documents/VelacarCRN:/home/ws --gpus all --shm-size 10G -it \
+        	--env="DISPLAY" \
+        	--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+        	velacar:v1
 ```
 You should now be in the container shell.
 
