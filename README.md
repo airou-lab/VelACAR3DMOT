@@ -237,21 +237,22 @@ You can now run the Tracking in different configurations:<br>
 To generate the nuScenes-formatted results, run:
 ```shell
 python workfile.py
+
+# will create a json output file nammed : 'track_results_nusc.json' in the Tracking/output/track_output_CRN/ directory, containing all the detections and formatted for evaluation. 
 ```
 Finally, to evaluate the output using nuScenes official evauation:
 ```shell
-# Create a json output file nammed : 'track_results_nusc.json' in the Tracking/output/track_output_CRN/ directory, containing all the detections and formatted for evaluation.
-python workfile.py --concat	
-
 # Display metrics and log them inside 'output/track_output_CRN/'
 python evaluate.py --result_path output/track_output_CRN/track_results_nusc.json --output_dir output/track_output_CRN/ --eval_set val --dataroot ./data/nuScenes 
 ```
 
 Alternatively, you can use the shell script launcher to run the whole tracking pipeline, including the separation, concatenation, and evaluation:
 ```shell
-bash launch.sh
+bash bash_launch.sh
+# or
+bash bash_launch_mini.sh
 ```
 
-The final output will be found in ./Tracking/output/track_output_CRN/
+The final output will be found in ./Tracking/output/runs
 
 
