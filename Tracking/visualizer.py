@@ -4,6 +4,10 @@
 # git    : https://github.com/MathisMM            
 #-----------------------------------------------
 
+# Display tracked bboxes from logs (deprecated) or from a json file (has to be named "track_results_nusc.json", which is default in mainfile.py)
+# Allows selection from ID or Class display colors.
+# Displays all the classes at once.
+
 import os 
 import json 
 import numpy as np
@@ -24,7 +28,8 @@ from nuscenes.utils.splits import create_splits_scenes
 from nuscenes.utils.geometry_utils import view_points, transform_matrix
 
 from libs.box import Box3D
-from libs.utils import load_nusc, random_colors, fixed_colors, box_name2color, render_box
+from libs.utils import load_nusc, random_colors, fixed_colors, box_name2color, render_box, mkdir_if_missing
+Box.render_box = render_box
 
 
 def get_bot_box(args,box,ego_pose,cs_record):
@@ -105,9 +110,6 @@ def visualization_by_frame(args,box_list,nusc,token):
     sample = nusc.get('sample', token)
     sample_data = nusc.get('sample_data', sample['data'][args.sensor])   # data for sample 0
 
-    # print(sample_data)
-    # print()
-
     cs_record = nusc.get('calibrated_sensor', sample_data['calibrated_sensor_token'])
     sensor_record = nusc.get('sensor', cs_record['sensor_token'])
     ego_pose = nusc.get('ego_pose', sample_data['ego_pose_token'])
@@ -146,11 +148,11 @@ def visualization_by_frame(args,box_list,nusc,token):
 
         
         if box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
-            box.render_box(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+            box.render_box(im=img,text=box.name+'_'+str(ID),view=cam_intrinsic,normalize=True,bottom_disp=True,colors=(c, c, c),linewidth=1,text_scale = 0.5)
             
-            if args.add_bottom_box: 
+            if args.add_bottom_box:
                 c=(255,255,255)
-                bot_box.render_cv2(im=img,view=cam_intrinsic,normalize=True, colors=(c, c, c),linewidth=1)
+                bot_box.render_cv2(im=img,view=cam_intrinsic,normalize=True,colors=(c, c, c),linewidth=1)
 
 
 
@@ -158,77 +160,31 @@ def visualization_by_frame(args,box_list,nusc,token):
 
     key = cv2.waitKeyEx(0)
 
+    if key == 115:
+        # Saving image
+
+        save_dir=os.path.join('saved_img',sample_data['filename'].split('/')[1],sample_data['filename'].split('/')[2])
+        mkdir_if_missing(save_dir.split('/')[0]) # ./saved_img/
+        mkdir_if_missing(save_dir.split('n')[0]) # ./saved_img/<sensor>/
+
+        cv2.imwrite(save_dir,img)
+        print("Image saved in: %s"%(save_dir))
+
+        key = cv2.waitKeyEx(0) # wait for key again
+
     if key == 65363 or key == 13:   # right arrow or enter
-        print("next frame:")
+        if args.verbose>=1: print("next frame:")
         cv2.destroyAllWindows()
         return 0
 
     elif key == 65361:              # left arrow
-        print("previous frame:")
+        if args.verbose>=1: print("previous frame:")
         cv2.destroyAllWindows()
         return 1
 
     elif key == 113:              # q key
         cv2.destroyAllWindows()
         exit()
-
-def render_box(self,im: np.ndarray,view: np.ndarray = np.eye(3),normalize: bool = False,colors: Tuple = ((0, 0, 255), (255, 0, 0), (155, 155, 155)),linewidth: int = 2) -> None:
-    """
-    Renders box using OpenCV2.
-    :param im: <np.array: width, height, 3>. Image array. Channels are in BGR order.
-    :param view: <np.array: 3, 3>. Define a projection if needed (e.g. for drawing projection in an image).
-    :param normalize: Whether to normalize the remaining coordinate.
-    :param colors: ((R, G, B), (R, G, B), (R, G, B)). Colors for front, side & rear.
-    :param linewidth: Linewidth for plot.
-    """
-    corners = view_points(self.corners(), view, normalize=normalize)[:2, :]
-
-    def draw_rect(selected_corners, color):
-        prev = selected_corners[-1]
-        for corner in selected_corners:
-            cv2.line(im,
-                     (int(prev[0]), int(prev[1])),
-                     (int(corner[0]), int(corner[1])),
-                     color, linewidth)
-            prev = corner
-
-    # Draw the sides
-    for i in range(4):
-        cv2.line(im,
-                 (int(corners.T[i][0]), int(corners.T[i][1])),
-                 (int(corners.T[i + 4][0]), int(corners.T[i + 4][1])),
-                 colors[2][::-1], linewidth)
-
-    # Draw front (first 4 corners) and rear (last 4 corners) rectangles(3d)/lines(2d)
-    draw_rect(corners.T[:4], colors[0][::-1])
-    draw_rect(corners.T[4:], colors[1][::-1])
-
-    print(self.corners().T)
-    print(corners.T)
-    # exit()
-
-    # Draw line indicating the front
-    center_bottom_forward = np.mean(corners.T[2:4], axis=0)
-    center_bottom = np.mean(corners.T[[2, 3, 7, 6]], axis=0)
-    cv2.line(im,
-             (int(center_bottom[0]), int(center_bottom[1])),
-             (int(center_bottom_forward[0]), int(center_bottom_forward[1])),
-             colors[0][::-1], linewidth)
-
-    h = corners.T[3][1] - corners.T[0][1]
-    l = corners.T[0][0] - corners.T[1][0]
-
-    center = [center_bottom[0]-l/2,center_bottom[1]-h/2]
-
-    cv2.putText(im,
-                str(self.label),
-                org=(int(center[0]), int(center[1])),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX,fontScale=0.5,color=(0, 0, 0),thickness=1,lineType=cv2.LINE_AA
-                )
-
-render_box
-Box.render_box = render_box
-
 
 
 def visualization_json(args):
@@ -237,6 +193,8 @@ def visualization_json(args):
     cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']
 
     tracking_file = args.data_dir+'/track_results_nusc.json'
+    
+    # pass_flag=True
 
     print('Loading data from:',tracking_file)
 
@@ -258,6 +216,10 @@ def visualization_json(args):
 
             print ('Processing scene', scene_name)
             
+            # if scene_name != 'scene-0110' and pass_flag==True:
+            #     continue 
+            # pass_flag=False
+
             # Parsing scene token. Using nuscenes loop to go through all the tokens even if no detections
             first_token = scene['first_sample_token']
             sample_token = first_token
@@ -269,6 +231,13 @@ def visualization_json(args):
                 token = sample_data['sample_token']
 
                 if sample_data['is_key_frame'] == True and token in track_data['results']:
+
+                    if args.verbose>=1:
+                        print('token:',token,'\n')
+                        sample=nusc.get('sample', token)
+                        print('sample:',sample,'\n')
+                        print('sample_data:',sample_data,'\n')
+                        print(100*'-')
 
                     box_list = []
                     
@@ -290,8 +259,8 @@ def visualization_json(args):
                                     )
                         # print(box)
                         box_list.append(box)
-    
-                        if args.verbose>=1:
+                        
+                        if args.verbose>=2:
                             print(box)
                             print(track_sample)
 
@@ -389,11 +358,11 @@ def visualization_logs(args):
                                 )
                     box_list.append(box)
 
-                    if args.verbose>=1:
+                    if args.verbose>=2:
                         print(box)
 
 
-                visualization_by_frame(args,box_list,nusc,token)
+                key = visualization_by_frame(args,box_list,nusc,token)
                 
             if sample_data['next'] == "":
                 #GOTO next scene
@@ -403,17 +372,147 @@ def visualization_logs(args):
                 sample_token = sample_data['next']
                 sample_data = nusc.get('sample_data', sample_token)
 
+def log_track(args):
+    '''
+    Log images with all tracked objects directly into results/logs/CRN_MOT
+    '''
+
+    nusc = load_nusc(args.split,args.data_root)
+    cat_list = ['car', 'pedestrian', 'truck', 'bus', 'bicycle', 'motorcycle', 'trailer']
+    # sensor_list = ['CAM_BACK','CAM_BACK_LEFT','CAM_BACK_RIGHT','CAM_FRONT','CAM_FRONT_LEFT','CAM_FRONT_RIGHT']
+    sensor_list = ['CAM_FRONT']
+
+    tracking_file = args.data_dir+'/track_results_nusc.json'
+    output_folder_base = './results/logs/CRN_MOT'
+    mkdir_if_missing('./results')
+    mkdir_if_missing('./results/logs')
+    mkdir_if_missing('./results/logs/CRN_MOT')
+
+    pass_flag=True
+
+    print('Loading data from:',tracking_file)
+
+    with open(tracking_file) as json_file:
+
+        track_data = json.load(json_file)
+
+        # scenes_list = /os.listdir(args.data_dir)
+        split_scenes = create_splits_scenes()
+        scenes_list = split_scenes[args.split]
+        if args.verbose>=2:
+            print('List of scenes :')
+            print(scenes_list)
+
+        for scene in nusc.scene:
+            scene_name = scene['name']
+            if scene_name not in scenes_list:   #only parsing scenes we used (i.e the corrrect dataset split)
+                continue
+
+            print ('Processing scene', scene_name)
+            output_folder = os.path.join(output_folder_base,scene_name)
+            mkdir_if_missing(output_folder)
+            
+            if scene_name != 'scene-0520' and pass_flag==True:
+                continue 
+            pass_flag=False
+
+            for sensor in sensor_list:
+                mkdir_if_missing(os.path.join(output_folder,sensor))
+
+                # Parsing scene token. Using nuscenes loop to go through all the tokens even if no detections
+                first_token = scene['first_sample_token']
+                sample_data_token = first_token
+                sample = nusc.get('sample', first_token) # sample 0
+
+                sample_data = nusc.get('sample_data', sample['data'][sensor])   # data for sample 0
+
+                while(True):
+
+                    sample_token = sample_data['sample_token']
+
+                    if sample_data['is_key_frame'] == True and sample_token in track_data['results']:
+
+                        # extracting metadata
+                        cs_record = nusc.get('calibrated_sensor', sample_data['calibrated_sensor_token'])
+                        ego_pose = nusc.get('ego_pose', sample_data['ego_pose_token'])
+                        cam_intrinsic = np.array(cs_record['camera_intrinsic'])
+
+                        image_path = os.path.join(args.data_root,sample_data['filename'])    
+                        img = cv2.imread(image_path) 
+
+                        # max_color = 30
+                        # colors = random_colors(max_color)       # Generate random colors
+                        colors = fixed_colors()                   # Using pre-made color list to identify ID
+                        max_color = len(colors)
+
+                        for track_sample in track_data['results'][sample_token]:
+
+                            q = Quaternion(track_sample['rotation'])
+
+                            box = Box(center = track_sample['translation'],
+                                        size = track_sample['size'],
+                                        orientation = q,
+                                        label = int(track_sample['tracking_id'].split('_')[0]),
+                                        score = float(track_sample['tracking_score']),
+                                        velocity = [track_sample['velocity'][0],track_sample['velocity'][1],0],
+                                        name = track_sample['tracking_name'],
+                                        token = sample_token
+                                        )                    
+                                
+                            if args.add_bottom_box:
+                                bot_box = get_bot_box(args,box,ego_pose,cs_record)
+
+                            # Move box to ego vehicle coord system.
+                            box.translate(-np.array(ego_pose['translation']))
+                            box.rotate(Quaternion(ego_pose['rotation']).inverse)
+
+                            #  Move box to sensor coord system.
+                            box.translate(-np.array(cs_record['translation']))
+                            box.rotate(Quaternion(cs_record['rotation']).inverse)
+                            
+                            if args.color_method == 'class':
+                                c = box_name2color(box.name)
+
+                            elif args.color_method =='id':
+                                ID = box.label
+                                color_float = colors[(int(ID)-1) % max_color]           # loops back to first color if more than max_color
+                                color_int = tuple([int(tmp * 255) for tmp in color_float])
+                                c = color_int
+
+                            
+                            if box.center[2]>0 and abs(box.center[0])<box.center[2]: # z value (front) cannot be < 0  
+                                box.render_box(im=img,text=box.name+'_'+str(ID),view=cam_intrinsic,normalize=True,bottom_disp=True,colors=(c, c, c),linewidth=2, text_scale=1.0)
+                                
+                                if args.add_bottom_box:
+                                    c=(255,255,255)
+                                    bot_box.render_cv2(im=img,view=cam_intrinsic,normalize=True,colors=(c, c, c),linewidth=1)                    
+
+                        filename = os.path.join(output_folder,sample_data['filename'].split('/')[1],sample_data['filename'].split('/')[2])
+                        cv2.imwrite(filename,img)
+                        print("Image saved in: %s"%(filename))
+
+
+                    if sample_data['next'] == "":
+                        #GOTO next scene
+                        break
+                    else:
+                        #GOTO next sample
+                        sample_data_token = sample_data['next']
+                        sample_data = nusc.get('sample_data', sample_data_token)
+
 
 def create_parser():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root', type=str, default='./data_mini/nuScenes', help='nuScenes data folder')
     parser.add_argument('--split', type=str, default='val', help='train/val/test')
-    parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='train_val/test')
+    parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='Camera views')
     parser.add_argument('--detection_method','--det', type=str, default='CRN', help='detection method')
     parser.add_argument('--viz_method', type=str, default='json', help='visualize json_file or logs')
     parser.add_argument('--color_method',type=str, default='class', help='class/id')
     
+    parser.add_argument('--autolog', action='store_true', default=False, help='Log tracking visualization directly instead of displaying')
+
     parser.add_argument('--verbose','-v' ,action='count',default=0,help='verbosity level')
 
     parser.add_argument('--add_bottom_box', '-b', action='store_true', default=False, help='add bottom bounding box to plot (in white)')
@@ -432,6 +531,10 @@ if __name__ == '__main__':
     assert args.color_method in ['class','id'], "unknown color method"
     assert args.split in ['train','val','test'], "wrong split type"
 
+    if args.autolog:
+        log_track(args)
+        exit()
+
     if args.viz_method == 'json':        
         visualization_json(args)
     elif args.viz_method == 'logs':
@@ -442,6 +545,10 @@ if __name__ == '__main__':
 launch with :
 python visualizer.py --sensor CAM_FRONT --color_method class --data_dir output/CRN_hyper_exp/metrics/iou_2d -vvv
 python visualizer.py --color_method id --viz_method logs --data_dir results/logs/CRN -b -vvv
+
+python visualizer.py --data_root ./data/nuScenes --data_dir ./output/best_res_val/kf_R_with_vel \
+                    --color_method id --viz_method json -v
+
 
 mini :
 python visualizer.py --data_root ./data_mini/nuScenes --data_dir ./output/track_output_CRN_mini \

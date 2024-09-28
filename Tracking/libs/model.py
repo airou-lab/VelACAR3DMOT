@@ -55,13 +55,13 @@ class AB3DMOT(object):
 			else: assert False, 'cat name error: %s'%(cat)
 		
 		elif self.det_name == 'Radiant': #Fine-tuned for Radiant
-			if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', 'iou_2d',   0.1, 1, 2
-			elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_2d', -0.5, 1, 2
-			elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.6, 1, 2
-			elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.8, 3, 2
-			elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.8, 1, 2
-			elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.8, 3, 2
-			elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.8, 3, 2
+			if cat == 'car': 			algm, metric, thres, min_hits, max_age = 'hungar', 'iou_2d',   0.1, 1, 3
+			elif cat == 'pedestrian': 	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_2d', -0.5, 1, 3
+			elif cat == 'truck': 		algm, metric, thres, min_hits, max_age = 'greedy', 'giou_3d', -0.6, 1, 3
+			elif cat == 'trailer': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.8, 3, 3
+			elif cat == 'bus': 			algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.8, 1, 3
+			elif cat == 'motorcycle':	algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.8, 3, 3
+			elif cat == 'bicycle': 		algm, metric, thres, min_hits, max_age = 'hungar', 'giou_3d', -0.8, 3, 3
 			else: assert False, 'cat name error: %s'%(cat)
 		
 		else:	# default
