@@ -257,8 +257,6 @@ def visualization(args):
                         else:
                             key = visualization_by_frame(args,box_list,nusc,sample_token,sample_data_token)
                         
-                        # key will be defined as the first data is a sample
-
                 if sample_data['next'] == "":
                     #GOTO next scene
                     break
@@ -284,7 +282,7 @@ def create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root','--nusc_data_root', type=str, default='./data_mini/nuScenes', help='nuScenes data folder path')
     parser.add_argument('--split', type=str, default='val', help='train/val/test')
-    parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='see sensor_list')
+    parser.add_argument('--sensor', type=str, default='CAM_FRONT', help='Camera views (see sensor_list)')
 
     parser.add_argument('--detection_method', type=str, default='CRN', help='CRN/Radiant')
     parser.add_argument('--color_method',type=str, default='class', help='class/random')
